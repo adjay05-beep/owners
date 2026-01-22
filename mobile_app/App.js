@@ -242,13 +242,18 @@ export default function App() {
 
       {/* HIDDEN SCOUT WORKER */}
       {scoutUrl && (
-        <View style={{ position: 'absolute', width: '100%', height: '100%', zIndex: -1, opacity: 0.01 }}>
+        <View style={{ position: 'absolute', width: 1, height: 1, zIndex: -1, opacity: 0.01 }}>
           <WebView
             ref={scoutRef}
             source={{ uri: scoutUrl }}
-            injectedJavaScript={INJECTED_SCRIPT}
+            onLoadEnd={() => {
+              // Imperative injection is more robust against bot/CSP checks
+              scoutRef.current.injectJavaScript(INJECTED_SCRIPT);
+            }}
             onMessage={onScoutMessage}
-            incognito={true}
+            userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
           />
         </View>
       )}
