@@ -144,6 +144,7 @@ def handle_scout_qp_global():
             has_phone = int(_qp_get("has_phone") or "0")
             has_address = int(_qp_get("has_address") or "0")
             has_news = int(_qp_get("has_news") or "0")
+            audit_json = _qp_get("audit_json") or "{}"
             
             # Update DB (checklist)
             update_checklist_flags(store_id, 
@@ -156,6 +157,7 @@ def handle_scout_qp_global():
                 has_phone=has_phone,
                 has_address=has_address,
                 has_news=has_news,
+                audit_json=audit_json,
                 last_scout_at=now_iso() # Record timestamp
             )
             
@@ -552,7 +554,11 @@ elif st.session_state.page in PROTECTED_PAGES:
         missing_list = [label for field, label in audit_map if not ck.get(field)]
         missing_str = ", ".join(missing_list)
         last_scout = ck.get("last_scout_at")
-        
+        import json
+        audit_data = {}
+        try: audit_data = json.loads(ck.get("audit_json") or "{}")
+        except: pass
+
         description_html = ""
         label_text = ""
         
@@ -563,7 +569,16 @@ elif st.session_state.page in PROTECTED_PAGES:
         elif missing_list:
             # Case 2: Scanned & Missing Found
             label_text = "플레이스 정보를 입력하세요"
-            description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>"
+            
+            # Evidence Summary
+            ev_parts = []
+            for k, v in audit_data.items():
+                label = next((l for f, l in audit_map if f.replace("has_", "").replace("_guide", "") in k), k)
+                if v: ev_parts.append(f"<b>[{label}]</b>: {v}")
+            
+            ev_html = f"<div style='margin-top:8px; padding:8px; background:#f8fafc; border-radius:4px; font-size:11px; color:#475569;'>🔍 <b>확인된 정보:</b><br>{'<br>'.join(ev_parts[:4])}...</div>" if ev_parts else ""
+            
+            description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>{ev_html}"
         else:
             # Case 3: All Perfect
             label_text = "플레이스 정보가 완벽합니다"

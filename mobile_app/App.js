@@ -16,18 +16,18 @@ export default function App() {
   const dashboardRef = useRef(null);
   const scoutRef = useRef(null);
 
-  // 3. Injected Script for Scout (Naver Place Scraper) - ULTRA ROBUST VERSION
+  // 3. Injected Script for Scout (Naver Place Scraper) - TRANSPARENT AUDIT VERSION
   const INJECTED_SCRIPT = `
     (function() {
       if (window.ownersInjected) return;
       window.ownersInjected = true;
 
       function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
-      log("Scanner Booted.");
+      log("Advanced Scanner Booted.");
 
       // 1. Auto-Scroll (Gentle but steady)
-      let scrollInt = setInterval(() => { window.scrollBy(0, 400); }, 800);
-      setTimeout(() => clearInterval(scrollInt), 10000);
+      let scrollInt = setInterval(() => { window.scrollBy(0, 400); }, 1000);
+      setTimeout(() => clearInterval(scrollInt), 12000);
 
       // 2. Continuous Scan
       let passes = 0;
@@ -52,40 +52,70 @@ export default function App() {
             }
 
             if (text.length > 50) {
-                // A. Primary Matchers
-                const hasHours = (text.includes("영업") || text.includes("매일") || text.includes("시 시작") || text.includes("시 종료") || html.includes("time")) ? "1" : "0";
-                const hasPhone = (text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/) || html.includes("tel:") || text.includes("전화")) ? "1" : "0";
-                const hasAddress = (text.includes("서울") || text.includes("경기") || text.includes("구 ") || text.includes("동 ") || text.match(/[가-히]{1,4}로/)) ? "1" : "0";
+                // A. Matchers with Evidence Capture
+                function findEvidence(patterns, source) {
+                    for(let p of patterns) {
+                        if (source.includes(p)) return p;
+                    }
+                    return null;
+                }
+
+                // [Hours] -> Check more patterns
+                const hourPatterns = ["영업", "매일", "시 시작", "시 종료", "휴무", "브레이크타임", "시간"];
+                const evHours = findEvidence(hourPatterns, text) || (html.includes("time") ? "HTML Tag Found" : null);
+
+                // [Phone]
+                const phoneMatch = text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/);
+                const evPhone = phoneMatch ? phoneMatch[0] : (html.includes("tel:") ? "Tel Link Found" : null);
+
+                // [Address]
+                const addrPatterns = ["서울", "경기", "인천", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주", "구 ", "동 ", "로 "];
+                const evAddress = findEvidence(addrPatterns, text);
                 
-                const hasMenu = (text.includes("메뉴") || text.includes("가격") || text.includes("원") || html.includes("/menu")) ? "1" : "0";
-                const hasNews = (text.includes("소식") || text.includes("새소식") || text.includes("공지") || html.includes("/feed")) ? "1" : "0";
-                const hasDesc = (text.includes("소개") || text.includes("설명") || text.includes("인사말") || text.length > 1200) ? "1" : "0";
+                // [Content]
+                const evMenu = findEvidence(["메뉴", "가격표", "가격", "피드", "원"], text) || (html.includes("/menu") ? "Menu Tab Link" : null);
+                const evNews = findEvidence(["최근 소식", "새소식", "소식", "공지", "이벤트"], text) || (html.includes("/feed") ? "Feed Tab Link" : null);
+                const evDesc = findEvidence(["소개", "설명", "인사말", "브리핑"], text) || (text.length > 1500 ? "Long Content Found" : null);
                 
-                const hasKeywords = (text.includes("키워드") || text.includes("태그") || html.includes("tag_item") || text.match(/#\\S+/g)?.length > 0) ? "1" : "0";
-                const hasParking = (text.includes("주차") || text.includes("발렛") || text.includes("무료주차")) ? "1" : "0";
-                const hasWay = (text.includes("오시는") || text.includes("길찾기") || text.includes("출구") || text.includes("m")) ? "1" : "0";
+                // [Convenience]
+                const evKeywords = findEvidence(["키워드", "태그", "해시태그"], text) || (text.match(/#\\S+/)/ ? "HashTag Found" : null);
+                const evParking = findEvidence(["주차", "발렛", "무료주차", "공영주차장"], text);
+                const evWay = findEvidence(["오시는", "길찾기", "출구", "역 "], text);
                 
-                // If we found a critical mass of info, or we are at the end
-                const score = [hasHours, hasPhone, hasAddress, hasMenu].filter(x => x === "1").length;
+                const score = [evHours, evPhone, evAddress, evMenu, evNews, evDesc].filter(x => !!x).length;
                 
-                if (passes > 15 || score >= 4) {
+                if (passes > 18 || score >= 6) {
                     clearInterval(scanInt);
-                    log("Scan Summary: Score=" + score + " | Sending Result...");
+                    log("Scan Complete. Score=" + score);
+                    
+                    const auditDetails = {
+                        hours: evHours, phone: evPhone, address: evAddress,
+                        menu: evMenu, news: evNews, desc: evDesc,
+                        keywords: evKeywords, parking: evParking, way: evWay
+                    };
+
                     window.ReactNativeWebView.postMessage(JSON.stringify({
                         type: 'SCOUT_RESULT',
                         data: {
-                            has_desc: hasDesc, has_menu: hasMenu, has_keywords: hasKeywords,
-                            has_parking: hasParking, has_way: hasWay, has_hours: hasHours,
-                            has_phone: hasPhone, has_address: hasAddress, has_news: hasNews
+                            has_desc: evDesc ? "1" : "0",
+                            has_menu: evMenu ? "1" : "0",
+                            has_keywords: evKeywords ? "1" : "0",
+                            has_parking: evParking ? "1" : "0",
+                            has_way: evWay ? "1" : "0",
+                            has_hours: evHours ? "1" : "0",
+                            has_phone: evPhone ? "1" : "0",
+                            has_address: evAddress ? "1" : "0",
+                            has_news: evNews ? "1" : "0",
+                            audit_json: JSON.stringify(auditDetails)
                         }
                     }));
                 }
             }
         } catch (e) { log("Error: " + e.message); }
 
-        if (passes > 25) { // ~20 seconds
+        if (passes > 30) { 
             clearInterval(scanInt);
-            log("TIMEOUT [FINAL] - Sending whatever found.");
+            log("TIMEOUT.");
             window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'SCOUT_RESULT',
                 data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }

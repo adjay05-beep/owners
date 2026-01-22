@@ -222,6 +222,13 @@ def init_db():
                 conn.commit()
             except sqlite3.OperationalError: pass
 
+    # [NEW] 상세 점검 결과 데이터 (JSON 저장용)
+    if not has_column(conn, "store_checklist", "audit_json"):
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN audit_json TEXT")
+            conn.commit()
+        except sqlite3.OperationalError: pass
+
     # [NEW] 스캔 시점 기록용 (최초 스캔 여부 판단)
     if not has_column(conn, "store_checklist", "last_scout_at"):
         try:
