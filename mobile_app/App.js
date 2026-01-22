@@ -83,8 +83,16 @@ export default function App() {
       const msg = JSON.parse(event.nativeEvent.data);
 
       if (msg.type === 'SCOUT_RESULT') {
+        // Extract IDs from the Worker URL
+        const workerUrl = new URL(scoutUrl);
+        const sid = workerUrl.searchParams.get("owners_store_id") || "";
+        const nonce = workerUrl.searchParams.get("owners_nonce") || "";
+
         const params = new URLSearchParams(msg.data);
         params.append('scout_done', '1');
+        params.append('owners_store_id', sid);
+        params.append('owners_nonce', nonce);
+
         const returnUrl = `${SERVER_URL}?${params.toString()}`;
 
         // Reset
@@ -93,8 +101,8 @@ export default function App() {
 
         // Navigate Dashboard
         dashboardRef.current.injectJavaScript(`
-          window.location.href = "${returnUrl}";
-        `);
+           window.location.href = "${returnUrl}";
+         `);
       }
       if (msg.type === 'LOG') console.log("[MobileScout]", msg.msg);
     } catch (e) { }

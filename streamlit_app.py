@@ -124,7 +124,7 @@ def handle_scout_qp_global():
     # 3) 플레이스 정보 스캔 완료 신호
     if _qp_get("scout_done") == "1":
         try:
-            store_id = int(_qp_get("store_id") or "0")
+            store_id = int(_qp_get("owners_store_id") or "0")
             # nonce check can be added if needed
             
             # Parse flags (1 or 0)
