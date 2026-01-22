@@ -19,20 +19,21 @@ import sqlite3
 
 # OpenAI Client Setup (Centralized Assistant Model)
 def get_client():
-    # Only use server-side secrets (st.secrets or os.environ)
-    key = os.environ.get("OPENAI_API_KEY")
-    if not key:
-        try:
-            key = st.secrets.get("OPENAI_API_KEY")
-        except:
-            pass
+    # Priority 1: Streamlit Secrets (Recommended for Replit/Cloud)
+    key = None
+    try:
+        if "OPENAI_API_KEY" in st.secrets:
+            key = st.secrets["OPENAI_API_KEY"]
+    except:
+        pass
     
-    if key:
-        return OpenAI(api_key=key)
+    # Priority 2: Environment Variables
+    if not key:
+        key = os.environ.get("OPENAI_API_KEY")
+    
+    if key and key.strip() and key.strip() != "여기에_키를_붙여넣으세요":
+        return OpenAI(api_key=key.strip())
     return None
-
-# Global Client Instance
-client = get_client()
 
 def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
     st.subheader("네이버 플레이스 셋팅")
@@ -87,8 +88,9 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
         st.markdown("#### 3. 찾아오시는 길 생성")
         in_addr = st.text_input("매장 주소", value=u_addr, key="place_addr")
         if st.button("길 안내 문구 생성", type="primary", use_container_width=True, key="place_way_btn"):
+            client = get_client()
             if not client:
-                st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
+                st.error("🤖 AI 서버 연결 실패: .streamlit/secrets.toml 파일에 올바른 API 키가 입력되어 있는지 확인해주세요.")
                 return
             with st.spinner("경로 분석 중..."):
                 # Notice: client_id/secret for Naver map is not passed here. 
@@ -154,8 +156,9 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
         q_input = st.text_input("질문 입력", placeholder="예: 플레이스 순위 올리는 법", key="place_qa_in")
         if st.button("질문하기", type="primary", use_container_width=True, key="place_qa_btn"):
             if q_input.strip():
+                client = get_client()
                 if not client:
-                    st.error("OpenAI API Key가 필요합니다.")
+                    st.error("🤖 AI 서버 연결 실패: .streamlit/secrets.toml 확인 필요")
                     return
                 with st.spinner("답변 작성 중..."):
                     prompt = f"네이버 스마트플레이스 전문가로서 답변: {q_input}. 매장:{u_name}. 전문적이고 간결하게."
@@ -207,8 +210,9 @@ def render_review(u_name, cat_label, u_sig, u_review_url):
                 if not u_rev.strip():
                     st.error("리뷰 내용을 입력해 주세요!")
                 else:
+                    client = get_client()
                     if not client:
-                        st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
+                        st.error("🤖 서버 설정 오류: .streamlit/secrets.toml 확인 필요")
                         return
                     with st.spinner("사장님의 마음을 담아 작성 중... ✍️"):
                         prompt = f"""
@@ -253,8 +257,9 @@ def render_blog(u_name, cat_label, u_ben):  # Added u_ben as arg? No main.py log
     # Need to handle inputs inside here as in main.py
     u_ben_input = st.text_input("혜택", placeholder="예: 2인 식사 제공 / 디저트 제공 / 시술 1회 제공", key="blog_in")
     if st.button("공고 생성", type="primary", use_container_width=True, key="blog_btn"):
+        client = get_client()
         if not client:
-            st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
+            st.error("🤖 서버 설정 오류: .streamlit/secrets.toml 확인 필요")
             return
         prompt = f"매장:{u_name}, 업종:{cat_label}, 혜택:{u_ben_input}. 블로그 체험단 모집글. 자연스러운 모집 문구 + 참여 조건 + 방문 안내 포함."
         res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
@@ -274,8 +279,9 @@ def render_insta(u_name, cat_label, u_sig, u_addr, u_insta_url):
 
     u_cap = st.text_input("사진 설명", placeholder="예: 오늘 만든 딸기 생크림 케이크 / 점심 특선 / 회식 추천 세트", key="ins_in")
     if st.button("캡션 생성", type="primary", use_container_width=True, key="ins_btn"):
+        client = get_client()
         if not client:
-            st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
+            st.error("🤖 서버 설정 오류: .streamlit/secrets.toml 확인 필요")
             return
         prompt = f"매장:{u_name}, 업종:{cat_label}, 설명:{u_cap}, 메뉴:{u_sig}, 지역:{u_addr}. 인스타 감성 캡션 1개 + 해시태그 12개."
         res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
@@ -438,11 +444,12 @@ def render_order():
             order_text = st.text_area("주문 내용 입력", height=100, placeholder="예: 참이슬 3박스, 연어 5kg...")
 
             if st.button("AI 주문서 생성 ✨", type="primary", use_container_width=True):
+                client = get_client()
                 if not order_text.strip():
                     st.error("주문할 내용을 입력해주세요.")
                 else:
                     if not client:
-                         st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
+                         st.error("🤖 서버 설정 오류: .streamlit/secrets.toml 파일에 OpenAI API Key 설정을 확인해주세요.")
                          return
                     with st.spinner("🤖 데이터를 분석 중입니다..."):
                         try:
