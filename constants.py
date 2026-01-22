@@ -410,6 +410,11 @@ a.btn-outline:hover {
     background-color: #1e293b !important;
 }
 
+/* Global Primary Button: Blue background, White text */
+.stButton > button[kind="primary"] {
+    color: white !important;
+}
+
 /* Premium Segmented Control (Stabilized Version) */
 .stButton > button {
     transition: all 0.2s ease !important;
@@ -424,7 +429,7 @@ div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
     font-weight: 700 !important;
 }
 
-/* Active Tab (Primary) */
+/* Active Tab (Primary) - Override global for specific nav style */
 div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"] {
     background-color: white !important;
     color: #3B82F6 !important;
