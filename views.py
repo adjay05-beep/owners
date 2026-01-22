@@ -17,14 +17,10 @@ from database import (
 from utils import get_naver_coordinates, naver_button, insta_button
 import sqlite3
 
-# OpenAI Client Setup (Support both os.environ and st.secrets)
+# OpenAI Client Setup (Centralized Assistant Model)
 def get_client():
-    # 1. Try session state (manual entry)
-    key = st.session_state.get("OPENAI_API_KEY")
-    # 2. Try os.environ
-    if not key:
-        key = os.environ.get("OPENAI_API_KEY")
-    # 3. Try st.secrets
+    # Only use server-side secrets (st.secrets or os.environ)
+    key = os.environ.get("OPENAI_API_KEY")
     if not key:
         try:
             key = st.secrets.get("OPENAI_API_KEY")
@@ -35,19 +31,8 @@ def get_client():
         return OpenAI(api_key=key)
     return None
 
-def show_api_key_sidebar():
-    if not get_client():
-        with st.sidebar:
-            st.divider()
-            st.warning("🤖 AI 기능을 위해 API 키가 필요합니다.")
-            new_key = st.text_input("OpenAI API Key 입력", type="password", key="api_key_input")
-            if st.button("설정 완료", use_container_width=True):
-                if new_key.startswith("sk-"):
-                    st.session_state["OPENAI_API_KEY"] = new_key
-                    st.success("API 키가 저장되었습니다!")
-                    st.rerun()
-                else:
-                    st.error("올바른 OpenAI 키 형식이 아닙니다.")
+# Global Client Instance
+client = get_client()
 
 def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
     st.subheader("네이버 플레이스 셋팅")
@@ -58,9 +43,8 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
     with st.expander("STEP 2. 상세 정보 생성", expanded=True):
         st.markdown("#### 1. 대표 키워드 생성(5개)")
         if st.button("키워드 추출", type="primary", use_container_width=True, key="place_kw_btn"):
-            cur_client = get_client()
-            if not cur_client:
-                st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
+            if not client:
+                st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
                 return
             with st.spinner("분석 중..."):
                 prompt = f"매장:{u_name}, 지역:{u_addr}, 업종:{cat_label}, 메뉴:{u_sig}. 네이버 플레이스용 SEO 키워드 5개 추천 (형식: #키워드1 #키워드2...)"
@@ -80,9 +64,8 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
         in_phone = st.text_input("대표 번호", placeholder="02-xxxx-xxxx", key="place_phone")
         in_time = st.text_input("영업 시간", placeholder="매일 10:00 - 22:00", key="place_time")
         if st.button("상세 설명 생성", type="primary", use_container_width=True, key="place_desc_btn"):
-            cur_client = get_client()
-            if not cur_client:
-                st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
+            if not client:
+                st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
                 return
             with st.spinner("작성 중..."):
                 prompt = f"""
@@ -104,9 +87,8 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
         st.markdown("#### 3. 찾아오시는 길 생성")
         in_addr = st.text_input("매장 주소", value=u_addr, key="place_addr")
         if st.button("길 안내 문구 생성", type="primary", use_container_width=True, key="place_way_btn"):
-            cur_client = get_client()
-            if not cur_client:
-                st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
+            if not client:
+                st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
                 return
             with st.spinner("경로 분석 중..."):
                 # Notice: client_id/secret for Naver map is not passed here. 
@@ -226,7 +208,7 @@ def render_review(u_name, cat_label, u_sig, u_review_url):
                     st.error("리뷰 내용을 입력해 주세요!")
                 else:
                     if not client:
-                        st.error("OpenAI API Key가 필요합니다.")
+                        st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
                         return
                     with st.spinner("사장님의 마음을 담아 작성 중... ✍️"):
                         prompt = f"""
@@ -272,7 +254,7 @@ def render_blog(u_name, cat_label, u_ben):  # Added u_ben as arg? No main.py log
     u_ben_input = st.text_input("혜택", placeholder="예: 2인 식사 제공 / 디저트 제공 / 시술 1회 제공", key="blog_in")
     if st.button("공고 생성", type="primary", use_container_width=True, key="blog_btn"):
         if not client:
-            st.error("OpenAI API Key가 필요합니다.")
+            st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
             return
         prompt = f"매장:{u_name}, 업종:{cat_label}, 혜택:{u_ben_input}. 블로그 체험단 모집글. 자연스러운 모집 문구 + 참여 조건 + 방문 안내 포함."
         res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
@@ -293,7 +275,7 @@ def render_insta(u_name, cat_label, u_sig, u_addr, u_insta_url):
     u_cap = st.text_input("사진 설명", placeholder="예: 오늘 만든 딸기 생크림 케이크 / 점심 특선 / 회식 추천 세트", key="ins_in")
     if st.button("캡션 생성", type="primary", use_container_width=True, key="ins_btn"):
         if not client:
-            st.error("OpenAI API Key가 필요합니다.")
+            st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
             return
         prompt = f"매장:{u_name}, 업종:{cat_label}, 설명:{u_cap}, 메뉴:{u_sig}, 지역:{u_addr}. 인스타 감성 캡션 1개 + 해시태그 12개."
         res = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
@@ -456,12 +438,11 @@ def render_order():
             order_text = st.text_area("주문 내용 입력", height=100, placeholder="예: 참이슬 3박스, 연어 5kg...")
 
             if st.button("AI 주문서 생성 ✨", type="primary", use_container_width=True):
-                cur_client = get_client()
                 if not order_text.strip():
                     st.error("주문할 내용을 입력해주세요.")
                 else:
-                    if not cur_client:
-                         st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
+                    if not client:
+                         st.error("🤖 서버 설정 오류: 관리자에게 OpenAI API Key 설정을 요청하세요.")
                          return
                     with st.spinner("🤖 데이터를 분석 중입니다..."):
                         try:

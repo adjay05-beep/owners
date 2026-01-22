@@ -18,7 +18,7 @@ from database import (
 from auth import verify_user, create_user, username_exists, seed_admin
 from services import calc_az_progress
 from views import (
-    render_place, render_review, render_blog, render_insta, render_event, render_order, show_api_key_sidebar
+    render_place, render_review, render_blog, render_insta, render_event, render_order
 )
 
 import re
@@ -396,9 +396,6 @@ elif st.session_state.page in PROTECTED_PAGES:
             st.session_state.username = None
             st.session_state.store_id = None
             go_to("LANDING")
-        
-        # Add API Key Input if missing
-        show_api_key_sidebar()
 
     # Load Store Data
     if st.session_state.store_id:
