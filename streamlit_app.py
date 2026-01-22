@@ -137,6 +137,7 @@ def handle_scout_qp_global():
             # Update DB (checklist)
             update_checklist_flags(store_id, 
                 has_place_desc=has_desc,
+                has_menu_guide=has_menu,
                 has_keywords=has_keywords,
                 has_parking_guide=has_parking,
                 has_way_guide=has_way,
@@ -149,6 +150,9 @@ def handle_scout_qp_global():
             
             if has_desc: msg_found.append("설명")
             else: msg_missing.append("설명")
+
+            if has_menu: msg_found.append("메뉴")
+            else: msg_missing.append("메뉴")
             
             if has_keywords: msg_found.append("키워드")
             else: msg_missing.append("키워드")
@@ -533,9 +537,10 @@ elif st.session_state.page in PROTECTED_PAGES:
              # Identify missing fields for label
              missing_list = []
              if not ck.get("has_place_desc"): missing_list.append("설명")
-             if not ck.get("has_keywords"): missing_list.append("보유키워드")
+             if not ck.get("has_menu_guide"): missing_list.append("메뉴")
+             if not ck.get("has_keywords"): missing_list.append("키워드")
              if not ck.get("has_parking_guide"): missing_list.append("주차")
-             if not ck.get("has_way_guide"): missing_list.append("오시는길")
+             if not ck.get("has_way_guide"): missing_list.append("길찾기")
              missing_str = ", ".join(missing_list)
              
              description_html = ""

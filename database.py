@@ -159,6 +159,7 @@ def init_db():
             has_review_url INTEGER DEFAULT 0,
             has_insta_url INTEGER DEFAULT 0,
             has_place_desc INTEGER DEFAULT 0,
+            has_menu_guide INTEGER DEFAULT 0,
             has_way_guide INTEGER DEFAULT 0,
             has_parking_guide INTEGER DEFAULT 0,
             last_review_reply_at TEXT,
@@ -200,6 +201,12 @@ def init_db():
     if not has_column(conn, "store_checklist", "last_place_news_at"):
         try:
             c.execute("ALTER TABLE store_checklist ADD COLUMN last_place_news_at TEXT")
+            conn.commit()
+        except sqlite3.OperationalError: pass
+
+    if not has_column(conn, "store_checklist", "has_menu_guide"):
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN has_menu_guide INTEGER DEFAULT 0")
             conn.commit()
         except sqlite3.OperationalError: pass
 
