@@ -840,31 +840,32 @@ elif st.session_state.page in PROTECTED_PAGES:
             if st.button("이전", type="secondary"): go_to("DASHBOARD")
         st.markdown("---")
 
-        left_info, right_work = st.columns([1, 2])
-        with left_info:
-             st.markdown(f"""
-            <div class="guide-box">
-                <div style="font-size:16px; font-weight:700; margin-bottom:12px;">상호 : {u_name}</div>
-                <div style="color:#888; font-size:12px; margin-bottom:2px;">업종</div>
-                <div style="margin-bottom:10px;">{cat_label}</div>
-                <div style="color:#888; font-size:12px; margin-bottom:2px;">주소</div>
-                <div>{u_addr}</div>
-            </div>
-            """, unsafe_allow_html=True)
+        if st.session_state.page == "ORDER":
+            render_order()
+        else:
+            left_info, right_work = st.columns([1, 2])
+            with left_info:
+                 st.markdown(f"""
+                <div class="guide-box">
+                    <div style="font-size:16px; font-weight:700; margin-bottom:12px;">상호 : {u_name}</div>
+                    <div style="color:#888; font-size:12px; margin-bottom:2px;">업종</div>
+                    <div style="margin-bottom:10px;">{cat_label}</div>
+                    <div style="color:#888; font-size:12px; margin-bottom:2px;">주소</div>
+                    <div>{u_addr}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-        with right_work:
-            if st.session_state.page == "PLACE":
-                render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target)
-            elif st.session_state.page == "REVIEW":
-                render_review(u_name, cat_label, u_sig, u_review_url)
-            elif st.session_state.page == "BLOG":
-                render_blog(u_name, cat_label, "") # u_ben? Input inside
-            elif st.session_state.page == "INSTA":
-                render_insta(u_name, cat_label, u_sig, u_addr, u_insta_url)
-            elif st.session_state.page == "EVENT":
-                render_event(u_name, cat_label, u_addr, u_sig, u_str, u_target)
-            elif st.session_state.page == "ORDER":
-                render_order()
+            with right_work:
+                if st.session_state.page == "PLACE":
+                    render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target)
+                elif st.session_state.page == "REVIEW":
+                    render_review(u_name, cat_label, u_sig, u_review_url)
+                elif st.session_state.page == "BLOG":
+                    render_blog(u_name, cat_label, "") # u_ben? Input inside
+                elif st.session_state.page == "INSTA":
+                    render_insta(u_name, cat_label, u_sig, u_addr, u_insta_url)
+                elif st.session_state.page == "EVENT":
+                    render_event(u_name, cat_label, u_addr, u_sig, u_str, u_target)
 
 init_db()
 seed_admin()
