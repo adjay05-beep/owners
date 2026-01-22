@@ -11,6 +11,7 @@ export default function App() {
   const [scoutUrl, setScoutUrl] = useState(null);   // Hidden Background Task
   const [reviewUrl, setReviewUrl] = useState(null); // Visible Modal Task
   const [isLoading, setIsLoading] = useState(false); // Spinner for Scout
+  const [isExternal, setIsExternal] = useState(false); // If user is browsing outside
 
   const dashboardRef = useRef(null);
   const scoutRef = useRef(null);
@@ -147,9 +148,31 @@ export default function App() {
         source={{ uri: SERVER_URL }}
         style={styles.webview}
         onShouldStartLoadWithRequest={shouldStartLoadWithRequest}
+        onNavigationStateChange={(navState) => {
+          // Check if we are on the main server or external
+          if (!navState.url.includes("streamlit.app")) {
+            setIsExternal(true);
+          } else {
+            setIsExternal(false);
+          }
+        }}
         javaScriptEnabled={true}
         domStorageEnabled={true}
       />
+
+      {/* PRETTY HOME BUTTON (When external) */}
+      {isExternal && (
+        <TouchableOpacity
+          style={styles.homeBtn}
+          onPress={() => {
+            // Go Home
+            dashboardRef.current.injectJavaScript(`window.location.href = "${SERVER_URL}";`);
+            setIsExternal(false);
+          }}
+        >
+          <Text style={styles.homeBtnText}>🏠 홈으로 돌아가기</Text>
+        </TouchableOpacity>
+      )}
 
       {/* LOADER OVERLAY (For Scout) */}
       {isLoading && (
