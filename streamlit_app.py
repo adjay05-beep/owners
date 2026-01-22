@@ -380,7 +380,7 @@ elif st.session_state.page in PROTECTED_PAGES:
             refresh_checklist_from_store(st.session_state.username, st.session_state.store_id)
             ck = get_checklist(st.session_state.store_id)
             # st.write(f"DEBUG CK KEYS: {list(ck.keys())}")
-            # st.write(f"DEBUG LS: {ck.get('last_scout_at')}")
+            st.write(f"DEBUG LS: {ck.get('last_scout_at')}")
             u_name = data["store_name"]
             u_addr = data["address"]
             u_target = data["target"]
