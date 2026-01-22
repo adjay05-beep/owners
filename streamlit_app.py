@@ -377,7 +377,7 @@ elif st.session_state.page in PROTECTED_PAGES:
             signature = st.text_input("대표 메뉴/서비스")
             strengths = st.text_area("강점", height=90)
             keywords = st.text_input("키워드(선택)")
-            review_url = st.text_input("네이버 리뷰 URL(선택)")
+            review_url = st.text_input("네이버 플레이스 URL (권장)", placeholder="예: https://map.naver.com/p/entry/place/...")
             insta_url = st.text_input("인스타그램 URL(선택)")
 
             c1, c2 = st.columns(2)
@@ -423,7 +423,7 @@ elif st.session_state.page in PROTECTED_PAGES:
             signature = st.text_input("대표 메뉴/서비스", value=u_sig)
             strengths = st.text_area("강점", value=u_str, height=90)
             keywords = st.text_input("키워드(선택)", value=(u_keywords or ""))
-            review_url = st.text_input("네이버 리뷰 URL(선택)", value=(u_review_url or ""))
+            review_url = st.text_input("네이버 플레이스 URL (권장)", value=(u_review_url or ""))
             insta_url = st.text_input("인스타그램 URL(선택)", value=(u_insta_url or ""))
 
             c1, c2 = st.columns(2)
@@ -497,14 +497,20 @@ elif st.session_state.page in PROTECTED_PAGES:
          # 2. Place Setting (+ Scout Button)
         if not (ck.get("has_keywords") and ck.get("has_place_desc") and ck.get("has_way_guide") and ck.get("has_parking_guide")):
              # Scout URL Construction
-             if u_review_url and ("m.place.naver.com" in u_review_url or "map.naver.com" in u_review_url):
-                 scout_target = u_review_url.replace("/review", "/home").replace("/visitor", "/home")
+             # 1. Use the manually entered Place URL first
+             if u_review_url and "naver.com" in u_review_url:
+                 # Try to clean it to point to /home if it's a map link
+                 # e.g. .../place/12345... -> https://m.place.naver.com/place/12345/home
+                 # But sticking to user's URL or a smart conversion is safer.
+                 # Let's force it to PC version if it's mobile, or keep it if it's map.
+                 # actually user provided PC map url. 
+                 scout_target = u_review_url
              else:
                  scout_target = f"https://map.naver.com/p/search/{u_name}"
              
              # Add Params
              nonce = set_review_sync_pending(st.session_state.store_id)
-             return_base = "http://localhost:8501"
+             return_base = "https://owners-twrcya3hrhhktgutcwsmtc.streamlit.app" # Using PROD URL
              scout_target += f"{'&' if '?' in scout_target else '?'}owners_nonce={nonce}&owners_store_id={st.session_state.store_id}&owners_return_url={return_base}&owners_mode=SCOUT"
 
              # Identify missing fields for label
