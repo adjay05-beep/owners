@@ -17,9 +17,37 @@ from database import (
 from utils import get_naver_coordinates, naver_button, insta_button
 import sqlite3
 
-# OpenAI Client Setup
-api_key = os.environ.get("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key) if api_key else None
+# OpenAI Client Setup (Support both os.environ and st.secrets)
+def get_client():
+    # 1. Try session state (manual entry)
+    key = st.session_state.get("OPENAI_API_KEY")
+    # 2. Try os.environ
+    if not key:
+        key = os.environ.get("OPENAI_API_KEY")
+    # 3. Try st.secrets
+    if not key:
+        try:
+            key = st.secrets.get("OPENAI_API_KEY")
+        except:
+            pass
+    
+    if key:
+        return OpenAI(api_key=key)
+    return None
+
+def show_api_key_sidebar():
+    if not get_client():
+        with st.sidebar:
+            st.divider()
+            st.warning("🤖 AI 기능을 위해 API 키가 필요합니다.")
+            new_key = st.text_input("OpenAI API Key 입력", type="password", key="api_key_input")
+            if st.button("설정 완료", use_container_width=True):
+                if new_key.startswith("sk-"):
+                    st.session_state["OPENAI_API_KEY"] = new_key
+                    st.success("API 키가 저장되었습니다!")
+                    st.rerun()
+                else:
+                    st.error("올바른 OpenAI 키 형식이 아닙니다.")
 
 def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
     st.subheader("네이버 플레이스 셋팅")
@@ -30,12 +58,13 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
     with st.expander("STEP 2. 상세 정보 생성", expanded=True):
         st.markdown("#### 1. 대표 키워드 생성(5개)")
         if st.button("키워드 추출", type="primary", use_container_width=True, key="place_kw_btn"):
-            if not client:
-                st.error("OpenAI API Key가 필요합니다.")
+            cur_client = get_client()
+            if not cur_client:
+                st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
                 return
             with st.spinner("분석 중..."):
                 prompt = f"매장:{u_name}, 지역:{u_addr}, 업종:{cat_label}, 메뉴:{u_sig}. 네이버 플레이스용 SEO 키워드 5개 추천 (형식: #키워드1 #키워드2...)"
-                res = client.chat.completions.create(
+                res = cur_client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[{"role": "user", "content": prompt}]
                 )
@@ -51,15 +80,16 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
         in_phone = st.text_input("대표 번호", placeholder="02-xxxx-xxxx", key="place_phone")
         in_time = st.text_input("영업 시간", placeholder="매일 10:00 - 22:00", key="place_time")
         if st.button("상세 설명 생성", type="primary", use_container_width=True, key="place_desc_btn"):
-            if not client:
-                st.error("OpenAI API Key가 필요합니다.")
+            cur_client = get_client()
+            if not cur_client:
+                st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
                 return
             with st.spinner("작성 중..."):
                 prompt = f"""
                 매장:{u_name}, 업종:{cat_label}, 주소:{u_addr}, 전화:{in_phone}, 시간:{in_time},
                 특징:{u_str}, 메뉴:{u_sig}, 타겟:{u_target}. 네이버 플레이스 상세설명. 신뢰감 있고 전문적인 톤으로 작성.
                 """
-                res = client.chat.completions.create(
+                res = cur_client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[{"role": "user", "content": prompt}]
                 )
@@ -74,8 +104,9 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
         st.markdown("#### 3. 찾아오시는 길 생성")
         in_addr = st.text_input("매장 주소", value=u_addr, key="place_addr")
         if st.button("길 안내 문구 생성", type="primary", use_container_width=True, key="place_way_btn"):
-            if not client:
-                st.error("OpenAI API Key가 필요합니다.")
+            cur_client = get_client()
+            if not cur_client:
+                st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
                 return
             with st.spinner("경로 분석 중..."):
                 # Notice: client_id/secret for Naver map is not passed here. 
@@ -425,11 +456,12 @@ def render_order():
             order_text = st.text_area("주문 내용 입력", height=100, placeholder="예: 참이슬 3박스, 연어 5kg...")
 
             if st.button("AI 주문서 생성 ✨", type="primary", use_container_width=True):
+                cur_client = get_client()
                 if not order_text.strip():
                     st.error("주문할 내용을 입력해주세요.")
                 else:
-                    if not client:
-                         st.error("OpenAI API Key가 필요합니다.")
+                    if not cur_client:
+                         st.error("OpenAI API Key가 필요합니다. 사이드바 하단에서 키를 입력해주세요.")
                          return
                     with st.spinner("🤖 데이터를 분석 중입니다..."):
                         try:
