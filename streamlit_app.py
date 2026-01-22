@@ -21,6 +21,22 @@ from views import (
     render_place, render_review, render_blog, render_insta, render_event, render_order
 )
 
+import re
+def normalize_naver_url(url: str) -> str:
+    """Consistently formats Naver URLs to prevent flickering/mismatch"""
+    if not url or "naver.com" not in url: return url
+    # If already mobile, just keep it clean
+    if "m.place.naver.com" in url:
+        return url.split("?")[0].strip()
+    # If PC variant or entry type
+    cat_match = re.search(r"/(place|restaurant|hairshop|medical|accommodation)/(\d+)", url)
+    if cat_match:
+        return f"https://m.place.naver.com/{cat_match.group(1)}/{cat_match.group(2)}/home"
+    pid_match = re.search(r"entry=place/(\d+)", url)
+    if pid_match:
+        return f"https://m.place.naver.com/place/{pid_match.group(1)}/home"
+    return url.strip()
+
 # =========================
 # 0) Config & Env
 # =========================
@@ -435,9 +451,10 @@ elif st.session_state.page in PROTECTED_PAGES:
                     if not store_name.strip(): st.error("상호를 입력해 주세요.")
                     elif not address.strip(): st.error("주소를 입력해 주세요.")
                     else:
+                        clean_url = normalize_naver_url(review_url.strip())
                         sid = add_store(st.session_state.username, store_name.strip(), category, (sub_category or "").strip(),
                                         address.strip(), target.strip(), signature.strip(), strengths.strip(),
-                                        keywords.strip(), review_url.strip(), insta_url.strip())
+                                        keywords.strip(), clean_url, insta_url.strip())
                         st.session_state.store_id = sid
                         go_to("DASHBOARD")
             with c2:
@@ -478,9 +495,10 @@ elif st.session_state.page in PROTECTED_PAGES:
             c1, c2 = st.columns(2)
             with c1:
                 if st.button("저장", type="primary", use_container_width=True):
+                    clean_url = normalize_naver_url(review_url.strip())
                     ok = update_store(st.session_state.username, st.session_state.store_id, store_name.strip(), category,
                                       (sub_category or "").strip(), address.strip(), target.strip(), signature.strip(),
-                                      strengths.strip(), keywords.strip(), review_url.strip(), insta_url.strip())
+                                      strengths.strip(), keywords.strip(), clean_url, insta_url.strip())
                     if ok:
                         st.success("저장 완료")
                         go_to("DASHBOARD")
@@ -576,7 +594,7 @@ elif st.session_state.page in PROTECTED_PAGES:
                 label = next((l for f, l in audit_map if f.replace("has_", "").replace("_guide", "") in k), k)
                 if v: ev_parts.append(f"<b>[{label}]</b>: {v}")
             
-            ev_html = f"<div style='margin-top:8px; padding:8px; background:#f8fafc; border-radius:4px; font-size:11px; color:#475569;'>🔍 <b>확인된 정보:</b><br>{'<br>'.join(ev_parts[:4])}...</div>" if ev_parts else ""
+            ev_html = f"<div style='margin-top:8px; padding:8px; background:#f8fafc; border-radius:4px; font-size:11px; color:#475569;'>🔍 <b>확인된 정보:</b><br>{'<br>'.join(ev_parts)}</div>" if ev_parts else ""
             
             description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>{ev_html}"
         else:
@@ -754,7 +772,7 @@ elif st.session_state.page in PROTECTED_PAGES:
                             <a href="{item['target']}" target="_self" style="text-decoration:none;">
                                 <div style="
                                     background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); 
-                                    color: white; border-radius: 6px; 
+                                    color: white !important; border-radius: 6px; 
                                     padding: 10px 0; text-align: center; font-weight: bold; font-size: 14px;
                                     box-shadow: 0 2px 4px rgba(0,0,0,0.1); display:block;
                                     margin-top: 2px;
