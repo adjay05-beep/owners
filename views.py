@@ -365,7 +365,9 @@ def render_order():
     st.caption("문자 발주와 온라인 구매 링크를 한 번에 정리해드립니다.")
 
     # State Sync from Query Params
-    otab = st.query_params.get("otab", "order")
+    raw_otab = st.query_params.get("otab", "order")
+    otab = raw_otab[0] if isinstance(raw_otab, list) else raw_otab
+    
     if "order_menu_selection" in st.session_state:
         target = st.session_state["order_menu_selection"]
         if target == "⚡ 통합 발주하기": otab = "order"
@@ -398,13 +400,13 @@ def render_order():
     </div>
     """, unsafe_allow_html=True)
 
-    # Map otab to logic
-    current_tab = "⚡ 통합 발주하기"
-    if otab == "sup": current_tab = "📱 거래처 관리"
-    elif otab == "link": current_tab = "🌐 온라인 링크"
+    # Map otab to simple internal IDs for stable dispatch
+    tab_id = "order"
+    if otab in ["sup", "link"]:
+        tab_id = otab
 
     # Tab Logic Dispatch
-    if current_tab == "⚡ 통합 발주하기":
+    if tab_id == "order":
         suppliers = get_suppliers(st.session_state.store_id)
 
         conn = sqlite3.connect(DB_PATH)
@@ -570,7 +572,7 @@ def render_order():
     # ==============================================================================
     # TAB 2: 거래처 관리
     # ==============================================================================
-    elif current_tab == "📱 거래처 관리":
+    elif tab_id == "sup":
 
         st.info("💡 팁: 거래처에서 받은 품목 리스트를 아래에 **복사+붙여넣기** 하세요. (줄바꿈도 자동으로 정리됩니다!)")
 
@@ -631,7 +633,7 @@ def render_order():
     # ==============================================================================
     # TAB 3: 온라인 링크
     # ==============================================================================
-    elif current_tab == "🌐 온라인 링크":
+    elif tab_id == "link":
 
         col_top1, col_top2 = st.columns([1, 1])
         with col_top1:
