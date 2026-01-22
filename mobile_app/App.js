@@ -250,5 +250,24 @@ const styles = StyleSheet.create({
   closeText: {
     fontSize: 14,
     fontWeight: '600'
+  },
+  homeBtn: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    elevation: 6,
+    zIndex: 1000
+  },
+  homeBtnText: {
+    fontWeight: 'bold',
+    color: '#333',
+    fontSize: 15
   }
 });
