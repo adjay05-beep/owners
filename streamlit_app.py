@@ -147,9 +147,6 @@ def handle_scout_qp_global():
             msg_found = []
             msg_missing = []
             
-            # DEBUG: Confirm Store ID
-            st.toast(f"DEBUG: StoreID={store_id}, TS={now_iso()}", icon="🐛")
-            
             if has_desc: msg_found.append("설명")
             else: msg_missing.append("설명")
             
