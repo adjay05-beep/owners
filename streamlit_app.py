@@ -528,10 +528,13 @@ elif st.session_state.page in PROTECTED_PAGES:
              if not ck.get("has_way_guide"): missing_list.append("오시는길")
              missing_str = ", ".join(missing_list)
              
+             description_html = ""
              if missing_list:
-                 label_text = f"플레이스 정보가 부족합니다 (<span style='color: #E53E3E; font-weight: 800;'>누락: {missing_str}</span>)"
+                 label_text = "플레이스 정보를 입력하세요"
+                 description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>"
              else:
-                 label_text = "플레이스 정보를 스캔해주세요"
+                 label_text = "플레이스 정보를 입력하세요"
+                 description_html = "<div style='margin-top:4px; font-size:13px; color:#666;'>매장 정보를 불러와서 점검해보세요.</div>"
              
              # [VALIDATION] Check if URL exists
              if not u_review_url or "naver.com" not in u_review_url:
@@ -565,6 +568,7 @@ elif st.session_state.page in PROTECTED_PAGES:
 
                  pending_items.append({
                      "label": label_text,
+                     "desc": description_html,
                      "btn": "내 플레이스 정보 불러오기",
                      "target": scout_target,
                      "type": "LINK_SCOUT",
