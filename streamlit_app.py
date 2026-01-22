@@ -157,6 +157,10 @@ def handle_scout_qp_global():
             
             st.toast(f"🔎 스캔 완료!\n{summary}", icon="🤖")
             
+            # Allow user to see the toast, then refresh to update list
+            time.sleep(2.5)
+            st.rerun()
+            
         except Exception as e:
             st.toast(f"❌ 스캔 처리 오류: {e}", icon="🚨")
 
