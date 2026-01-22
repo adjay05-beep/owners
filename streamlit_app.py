@@ -133,6 +133,7 @@ def handle_scout_qp_global():
                 has_keywords=has_keywords,
                 has_parking_guide=has_parking,
                 has_way_guide=has_way,
+                last_scout_at=now_iso() # Record timestamp
             )
             
             # Detailed Feedback Toast
@@ -529,12 +530,20 @@ elif st.session_state.page in PROTECTED_PAGES:
              missing_str = ", ".join(missing_list)
              
              description_html = ""
-             if missing_list:
+             last_scout = ck.get("last_scout_at")
+             
+             if not last_scout:
+                 # Case 1: Never Scanned -> Clean State
+                 label_text = "플레이스 정보를 입력하세요"
+                 description_html = "<div style='margin-top:4px; font-size:13px; color:#666;'>매장 정보를 불러와서 점검해보세요.</div>"
+             elif missing_list:
+                 # Case 2: Scanned & Missing Found -> Red Alert
                  label_text = "플레이스 정보를 입력하세요"
                  description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>"
              else:
-                 label_text = "플레이스 정보를 입력하세요"
-                 description_html = "<div style='margin-top:4px; font-size:13px; color:#666;'>매장 정보를 불러와서 점검해보세요.</div>"
+                 # Case 3: Scanned & All Good
+                 label_text = "플레이스 정보가 완벽합니다"
+                 description_html = "<div style='margin-top:4px; font-size:13px; color:#059669; font-weight:bold;'>✅ 모든 필수 정보가 등록되어 있습니다.</div>"
              
              # [VALIDATION] Check if URL exists
              if not u_review_url or "naver.com" not in u_review_url:

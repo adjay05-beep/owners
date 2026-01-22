@@ -185,6 +185,10 @@ def init_db():
     if not has_column(conn, "store_checklist", "last_place_news_at"):
         c.execute("ALTER TABLE store_checklist ADD COLUMN last_place_news_at TEXT")
 
+    # [NEW] 스캔 시점 기록용 (최초 스캔 여부 판단)
+    if not has_column(conn, "store_checklist", "last_scout_at"):
+        c.execute("ALTER TABLE store_checklist ADD COLUMN last_scout_at TEXT")
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS favorites (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
