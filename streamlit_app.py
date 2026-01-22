@@ -649,11 +649,12 @@ elif st.session_state.page in PROTECTED_PAGES:
                             background: #F8FAFC; 
                             border-radius: 8px; 
                             border-left: 5px solid var(--primary);
-                            display:flex; align-items:center; 
+                            display:flex; flex-direction:column; justify-content:center;
                             color: #333;
                             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                         ">
                             <span style="color: #333; font-weight: 600; font-size: 15px;">{item['label']}</span>
+                            {item.get('desc', '')}
                         </div>
                         """, unsafe_allow_html=True)
                     with c_btn:
