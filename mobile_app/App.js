@@ -158,7 +158,8 @@ export default function App() {
 
         const returnUrl = `${SERVER_URL}?${params.toString()}`;
 
-        // Reset
+        // Reset flow
+        setScoutUrl(null);
         setIsLoading(false);
         setScoutStatus("완료!");
 
@@ -256,9 +257,9 @@ export default function App() {
         </View>
       )}
 
-      {/* HIDDEN SCOUT WORKER - Now Visible but Behind Overlay to avoid throttling */}
+      {/* HIDDEN SCOUT WORKER - Now Transparent but Full-Size to avoid throttling */}
       {scoutUrl && (
-        <View style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 1 }}>
+        <View style={{ position: 'absolute', width: '100%', height: '100%', zIndex: -1, opacity: 0.01 }}>
           <WebView
             ref={scoutRef}
             source={{ uri: scoutUrl }}
