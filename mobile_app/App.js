@@ -23,110 +23,119 @@ export default function App() {
       if (window.ownersInjected) return;
       window.ownersInjected = true;
 
-      function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
-      log("스캐너 부팅됨...");
+      function log(msg) { 
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); 
+        }
+      }
 
-      // 1. Auto-Scroll (Gentle but steady)
-      let scrollInt = setInterval(() => { window.scrollBy(0, 400); }, 1000);
-      setTimeout(() => clearInterval(scrollInt), 12000);
+      try {
+          log("스캐너 부팅됨...");
 
-      // 2. Continuous Scan
-      let passes = 0;
-      const scanInt = setInterval(() => {
-        passes++;
-        try {
-            const body = document.body;
-            const docEl = document.documentElement;
-            // Aggregated text source
-            const text = (body.innerText || "") + " " + (docEl.innerText || "");
-            const html = (body.innerHTML || "") + " " + (docEl.innerHTML || "");
-            
-            if (passes % 5 === 0) log("Pass " + passes + " | RawLen: " + text.length + " | Visible: " + (text.substring(0, 30)));
+          // 1. Auto-Scroll (Gentle but steady)
+          let scrollInt = setInterval(() => { window.scrollBy(0, 400); }, 1000);
+          setTimeout(() => clearInterval(scrollInt), 12000);
 
-            // [NEW] Page Not Found Detection
-            if (text.includes("페이지를 찾을 수 없습니다") || text.includes("존재하지 않는") || text.includes("잘못된 접근")) {
-                clearInterval(scanInt);
-                log("FATAL: Place Page Not Found on Naver.");
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'SCOUT_RESULT',
-                    data: { is_invalid_url: "1" }
-                }));
-                return;
-            }
-
-            if (text.length > 50) {
-                // A. Matchers with Evidence Capture
-                function findEvidence(patterns, source) {
-                    for(let p of patterns) {
-                        if (source.includes(p)) return p;
-                    }
-                    return null;
-                }
-
-                // [Hours]
-                const hourPatterns = ["영업", "매일", "시 시작", "시 종료", "휴무", "브레이크타임", "시간", "정보 수정 제안"];
-                const evHours = findEvidence(hourPatterns, text) || (html.includes("time") ? "HTML Tag Found" : null);
-
-                // [Phone]
-                const phoneMatch = text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/);
-                const evPhone = phoneMatch ? phoneMatch[0] : (html.includes("tel:") || text.includes("전화") ? "Contact Found" : null);
-
-                // [Address]
-                const addrPatterns = ["서울", "경기", "인천", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주", "구 ", "동 ", "로 ", "길 "];
-                const evAddress = findEvidence(addrPatterns, text);
+          // 2. Continuous Scan
+          let passes = 0;
+          const scanInt = setInterval(() => {
+            passes++;
+            try {
+                const body = document.body;
+                const docEl = document.documentElement;
+                // Aggregated text source
+                const text = (body.innerText || "") + " " + (docEl.innerText || "");
+                const html = (body.innerHTML || "") + " " + (docEl.innerHTML || "");
                 
-                // [Content]
-                const evMenu = findEvidence(["메뉴", "가격표", "가격", "피드", "원", "메뉴판"], text) || (html.includes("/menu") ? "Menu Tab Link" : null);
-                const evNews = findEvidence(["최근 소식", "새소식", "소식", "공지", "이벤트", "업데이트"], text) || (html.includes("/feed") ? "Feed Tab Link" : null);
-                const evDesc = findEvidence(["소개", "설명", "인사말", "브리핑"], text) || (text.length > 1500 ? "Long Content Found" : null);
-                
-                // [Convenience]
-                const evKeywords = findEvidence(["키워드", "태그", "해시태그"], text) || (text.match(/#\\S+/)/ ? "HashTag Found" : null);
-                const evParking = findEvidence(["주차", "발렛", "무료주차", "공영주차장"], text);
-                const evWay = findEvidence(["오시는", "길찾기", "출구", "역 "], text);
-                
-                const score = [evHours, evPhone, evAddress, evMenu, evNews, evDesc].filter(x => !!x).length;
-                
-                if (passes > 15 || score >= 7) {
+                if (passes % 5 === 0) log("Pass " + passes + " | RawLen: " + text.length);
+
+                // [NEW] Page Not Found Detection
+                if (text.includes("페이지를 찾을 수 없습니다") || text.includes("존재하지 않는") || text.includes("잘못된 접근")) {
                     clearInterval(scanInt);
-                    log("Scan Complete. Score=" + score + " | Sending Result...");
-                    
-                    const auditDetails = {
-                        hours: evHours, phone: evPhone, address: evAddress,
-                        menu: evMenu, news: evNews, desc: evDesc,
-                        keywords: evKeywords, parking: evParking, way: evWay
-                    };
-
+                    log("FATAL: Place Page Not Found on Naver.");
                     window.ReactNativeWebView.postMessage(JSON.stringify({
                         type: 'SCOUT_RESULT',
-                        data: {
-                            has_desc: evDesc ? "1" : "0",
-                            has_menu: evMenu ? "1" : "0",
-                            has_keywords: evKeywords ? "1" : "0",
-                            has_parking: evParking ? "1" : "0",
-                            has_way: evWay ? "1" : "0",
-                            has_hours: evHours ? "1" : "0",
-                            has_phone: evPhone ? "1" : "0",
-                            has_address: evAddress ? "1" : "0",
-                            has_news: evNews ? "1" : "0",
-                            audit_json: JSON.stringify(auditDetails)
-                        }
+                        data: { is_invalid_url: "1" }
                     }));
+                    return;
                 }
-            } else if (passes > 25) {
-                 log("Empty Result Pass " + passes + " | HTML Len: " + html.length);
-            }
-        } catch (e) { log("Error: " + e.message); }
 
-        if (passes > 40) { 
-            clearInterval(scanInt);
-            log("TIMEOUT [FINAL]. RawLen: " + (document.documentElement.innerText||"").length);
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'SCOUT_RESULT',
-                data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
-            }));
-        }
-      }, 500);
+                if (text.length > 50) {
+                    // A. Matchers with Evidence Capture
+                    function findEvidence(patterns, source) {
+                        for(let p of patterns) {
+                            if (source.includes(p)) return p;
+                        }
+                        return null;
+                    }
+
+                    // [Hours]
+                    const hourPatterns = ["영업", "매일", "시 시작", "시 종료", "휴무", "브레이크타임", "시간", "정보 수정 제안"];
+                    const evHours = findEvidence(hourPatterns, text) || (html.includes("time") ? "HTML Tag Found" : null);
+
+                    // [Phone]
+                    const phoneMatch = text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/);
+                    const evPhone = phoneMatch ? phoneMatch[0] : (html.includes("tel:") || text.includes("전화") ? "Contact Found" : null);
+
+                    // [Address]
+                    const addrPatterns = ["서울", "경기", "인천", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주", "구 ", "동 ", "로 ", "길 "];
+                    const evAddress = findEvidence(addrPatterns, text);
+                    
+                    // [Content]
+                    const evMenu = findEvidence(["메뉴", "가격표", "가격", "피드", "원", "메뉴판"], text) || (html.includes("/menu") ? "Menu Tab Link" : null);
+                    const evNews = findEvidence(["최근 소식", "새소식", "소식", "공지", "이벤트", "업데이트"], text) || (html.includes("/feed") ? "Feed Tab Link" : null);
+                    const evDesc = findEvidence(["소개", "설명", "인사말", "브리핑"], text) || (text.length > 1500 ? "Long Content Found" : null);
+                    
+                    // [Convenience] - FIXED REGEX SYNTAX
+                    const evKeywords = findEvidence(["키워드", "태그", "해시태그"], text) || (text.match(/#\\S+/) ? "HashTag Found" : null);
+                    const evParking = findEvidence(["주차", "발렛", "무료주차", "공영주차장"], text);
+                    const evWay = findEvidence(["오시는", "길찾기", "출구", "역 "], text);
+                    
+                    const score = [evHours, evPhone, evAddress, evMenu, evNews, evDesc].filter(x => !!x).length;
+                    
+                    if (passes > 15 || score >= 7) {
+                        clearInterval(scanInt);
+                        log("Scan Complete. Score=" + score + " | Sending Result...");
+                        
+                        const auditDetails = {
+                            hours: evHours, phone: evPhone, address: evAddress,
+                            menu: evMenu, news: evNews, desc: evDesc,
+                            keywords: evKeywords, parking: evParking, way: evWay
+                        };
+
+                        window.ReactNativeWebView.postMessage(JSON.stringify({
+                            type: 'SCOUT_RESULT',
+                            data: {
+                                has_desc: evDesc ? "1" : "0",
+                                has_menu: evMenu ? "1" : "0",
+                                has_keywords: evKeywords ? "1" : "0",
+                                has_parking: evParking ? "1" : "0",
+                                has_way: evWay ? "1" : "0",
+                                has_hours: evHours ? "1" : "0",
+                                has_phone: evPhone ? "1" : "0",
+                                has_address: evAddress ? "1" : "0",
+                                has_news: evNews ? "1" : "0",
+                                audit_json: JSON.stringify(auditDetails)
+                            }
+                        }));
+                    }
+                } else if (passes > 25) {
+                    log("Empty Result Pass " + passes + " | HTML Len: " + html.length);
+                }
+            } catch (e) { log("Error Internal: " + e.message); }
+
+            if (passes > 40) { 
+                clearInterval(scanInt);
+                log("TIMEOUT [FINAL]. RawLen: " + (document.documentElement.innerText||"").length);
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'SCOUT_RESULT',
+                    data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
+                }));
+            }
+          }, 500);
+      } catch (e) {
+        log("Fatal Script Error: " + e.message);
+      }
     })();
     true;
   `;
@@ -255,7 +264,12 @@ export default function App() {
             source={{ uri: scoutUrl }}
             onLoadEnd={() => {
               setScoutStatus("페이지 접속 완료. 분석 시작...");
-              scoutRef.current.injectJavaScript(INJECTED_SCRIPT);
+              // Small delay to ensure bridge is ready
+              setTimeout(() => {
+                if (scoutRef.current) {
+                  scoutRef.current.injectJavaScript(INJECTED_SCRIPT);
+                }
+              }, 500);
             }}
             onMessage={onScoutMessage}
             userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
