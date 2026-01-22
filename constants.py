@@ -218,9 +218,18 @@ html, body, [class*="css"] {
     background-color: #F1F5F9; /* Slate-100 */
 }
 
-/* Standard Text Color (Use Streamlit Theme if possible, or fallback safely) */
-.stMarkdown p, .stMarkdown span, .stMarkdown div, .stMarkdown li {
+/* Global High-Contrast Text Policy */
+p, span, div, li, label, .stMarkdown, [data-testid="stCaptionItem"], [data-testid="stWidgetLabel"] {
+    color: var(--text-main) !important;
     line-height: 1.6;
+}
+
+/* Fix for Dark UI components (Boxes) - RE-OVERRIDE to Light */
+.qa-box *, .guide-box *, .prompt-box *, .stButton button[kind="primary"] {
+    color: #F1F5F9 !important;
+}
+.qa-box .header, .prompt-box .header {
+    color: #FFD700 !important;
 }
 
 /* -------------------------------------------------------------------------- */
