@@ -15,5 +15,8 @@ echo "🚀 Starting Servers..."
 # Start FastAPI in background
 uvicorn api:app --host 0.0.0.0 --port 8000 & 
 
-# Start Next.js
+# Start Streamlit in background
+streamlit run streamlit_app.py --server.port 8501 &
+
+# Start Next.js (Foreground)
 cd frontend && npm run dev
