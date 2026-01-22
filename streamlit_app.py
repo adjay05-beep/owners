@@ -128,19 +128,34 @@ def handle_scout_qp_global():
             has_way = int(_qp_get("has_way") or "0")
             
             # Update DB (checklist)
-            # Note: We rely on the extension's truth.
             update_checklist_flags(store_id, 
                 has_place_desc=has_desc,
                 has_keywords=has_keywords,
                 has_parking_guide=has_parking,
                 has_way_guide=has_way,
-                # has_menu flag might need a column or just ignore if not in checklist schema yet?
-                # We don't have 'has_menu' column in checklist yet. 
-                # But user asked for it. I should probably add it or just map it to something else?
-                # For now, let's update what we have. 
             )
             
-            st.toast("✅ 매장 정보 스캔 완료! 결과가 반영되었습니다.", icon="🔎")
+            # Detailed Feedback Toast
+            msg_found = []
+            msg_missing = []
+            
+            if has_desc: msg_found.append("설명")
+            else: msg_missing.append("설명")
+            
+            if has_keywords: msg_found.append("키워드")
+            else: msg_missing.append("키워드")
+            
+            if has_parking: msg_found.append("주차")
+            else: msg_missing.append("주차")
+             
+            if has_way: msg_found.append("길찾기")
+            else: msg_missing.append("길찾기")
+            
+            summary = ""
+            if msg_found: summary += f"✅ 발견: {', '.join(msg_found)}  \n"
+            if msg_missing: summary += f"❌ 누락: {', '.join(msg_missing)}"
+            
+            st.toast(f"🔎 스캔 완료!\n{summary}", icon="🤖")
             
         except Exception as e:
             st.toast(f"❌ 스캔 처리 오류: {e}", icon="🚨")
@@ -670,6 +685,22 @@ elif st.session_state.page in PROTECTED_PAGES:
                                 </div>
                             </a>
                             """, unsafe_allow_html=True)
+                            
+                            # Secondary 'Edit' Button
+                            if "sub_btn" in item:
+                                 st.markdown(f"""
+                                <a href="{item['sub_target']}" target="_blank" style="text-decoration:none;">
+                                    <div style="
+                                        background-color: #F1F5F9; 
+                                        color: #64748B; border: 1px solid #CBD5E1;
+                                        border-radius: 6px; 
+                                        padding: 8px 0; text-align: center; font-weight: 600; font-size: 13px;
+                                        display:block; margin-top: 6px;
+                                    ">
+                                        {item['sub_btn']} ➜
+                                    </div>
+                                </a>
+                                """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         # --- SYNC BUTTON (ALWAYS VISIBLE) ---
