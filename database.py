@@ -393,7 +393,7 @@ def refresh_checklist_from_store(username: str, store_id: int):
     if not store: return
     update_checklist_flags(
         store_id,
-        has_keywords=1 if (store["keywords"] or "").strip() else 0,
+        # has_keywords=1 if (store["keywords"] or "").strip() else 0, # DO NOT SYNC: Scanner is truth
         has_review_url=1 if (store["review_url"] or "").strip() else 0,
         has_insta_url=1 if (store["insta_url"] or "").strip() else 0,
     )

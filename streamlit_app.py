@@ -532,7 +532,7 @@ elif st.session_state.page in PROTECTED_PAGES:
             })
 
          # 2. Place Setting (+ Scout Button)
-        if not (ck.get("has_keywords") and ck.get("has_place_desc") and ck.get("has_way_guide") and ck.get("has_parking_guide")):
+        if not (ck.get("has_keywords") and ck.get("has_place_desc") and ck.get("has_way_guide") and ck.get("has_parking_guide") and ck.get("has_menu_guide")):
              
              # Identify missing fields for label
              missing_list = []
