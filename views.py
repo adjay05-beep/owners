@@ -566,15 +566,12 @@ def render_order():
                 if not new_name or not new_phone:
                     st.error("이름과 전화번호는 필수입니다.")
                 else:
-                    final_items = new_items_raw.replace("\n", ",").replace(",,", ",")
-                    add_supplier(st.session_state.store_id, new_name, new_phone, final_items)
-
-                    st.session_state["in_sup_name"] = ""
-                    st.session_state["in_sup_phone"] = ""
-                    st.session_state["in_sup_items"] = ""
-                    st.success(f"'{new_name}' 등록 완료!")
-                    time.sleep(0.5)
-                    st.rerun()
+                    with st.spinner("저장 중..."):
+                        final_items = new_items_raw.replace("\n", ",").replace(",,", ",")
+                        add_supplier(st.session_state.store_id, new_name, new_phone, final_items)
+                        st.success(f"'{new_name}' 등록 완료!")
+                        time.sleep(1) # Visual feedback
+                        st.rerun()
 
         st.markdown("---")
 
