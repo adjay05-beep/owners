@@ -157,6 +157,11 @@ def handle_scout_qp_global():
             
             st.toast(f"🔎 스캔 완료!\n{summary}", icon="🤖")
             
+            # Clear params and refresh UI to show new data
+            time.sleep(2.0)
+            st.query_params.clear()
+            st.rerun()
+            
         except Exception as e:
             st.toast(f"❌ 스캔 처리 오류: {e}", icon="🚨")
 
@@ -292,6 +297,9 @@ elif st.session_state.page == "SIGNUP":
 # 4) Protected Pages
 # =========================
 elif st.session_state.page in PROTECTED_PAGES:
+    # 0. Global Handler (Scout/Sync) - Process before UI load
+    handle_scout_qp_global()
+
     with st.sidebar:
         st.subheader("OWNERS")
         st.caption(f"계정: {st.session_state.username}")
