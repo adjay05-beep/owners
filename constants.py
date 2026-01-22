@@ -411,7 +411,7 @@ a.btn-outline:hover {
 }
 
 /* Global Primary Button: Blue background, White text */
-.stButton > button[kind="primary"] {
+button[kind="primary"], button[kind="primary"] p {
     color: white !important;
 }
 
@@ -421,7 +421,8 @@ a.btn-outline:hover {
 }
 
 /* Inactive Tabs (Secondary) */
-div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"],
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] p {
     background-color: #E2E8F0 !important;
     color: #64748B !important;
     border: none !important;
@@ -429,8 +430,9 @@ div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
     font-weight: 700 !important;
 }
 
-/* Active Tab (Primary) - Override global for specific nav style */
-div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"] {
+/* Active Tab (Primary) - Override global with blue text on white background */
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"],
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"] p {
     background-color: white !important;
     color: #3B82F6 !important;
     border: 1px solid #E2E8F0 !important;
