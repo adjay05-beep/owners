@@ -410,5 +410,41 @@ a.btn-outline:hover {
     background-color: #1e293b !important;
 }
 
+/* Premium Segmented Control (Navigation) */
+.segmented-nav {
+    display: flex;
+    background-color: #E2E8F0;
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 24px;
+    gap: 4px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+.segment-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none !important;
+    border: none;
+    display: block;
+}
+.segment-item.active {
+    background-color: white;
+    color: #3B82F6 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.segment-item.inactive {
+    color: #64748B !important;
+}
+.segment-item.inactive:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #334155 !important;
+}
+
 </style>
 """
