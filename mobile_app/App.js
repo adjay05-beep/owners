@@ -12,6 +12,7 @@ export default function App() {
   const [reviewUrl, setReviewUrl] = useState(null); // Visible Modal Task
   const [isLoading, setIsLoading] = useState(false); // Spinner for Scout
   const [isExternal, setIsExternal] = useState(false); // If user is browsing outside
+  const [scoutStatus, setScoutStatus] = useState("준비 중..."); // Real-time Debug Logs
 
   const dashboardRef = useRef(null);
   const scoutRef = useRef(null);
@@ -23,7 +24,7 @@ export default function App() {
       window.ownersInjected = true;
 
       function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
-      log("Advanced Scanner Booted.");
+      log("스캐너 부팅됨...");
 
       // 1. Auto-Scroll (Gentle but steady)
       let scrollInt = setInterval(() => { window.scrollBy(0, 400); }, 1000);
@@ -145,15 +146,15 @@ export default function App() {
         const returnUrl = `${SERVER_URL}?${params.toString()}`;
 
         // Reset
-        setScoutUrl(null);
-        setIsLoading(false); // Hide Spinner
+        setIsLoading(false);
+        setScoutStatus("완료!");
 
-        // Navigate Dashboard
-        dashboardRef.current.injectJavaScript(`
-           window.location.href = "${returnUrl}";
-         `);
+        dashboardRef.current.injectJavaScript(`window.location.href = "${returnUrl}";`);
       }
-      if (msg.type === 'LOG') console.log("[MobileScout]", msg.msg);
+      if (msg.type === 'LOG') {
+        console.log("[MobileScout]", msg.msg);
+        setScoutStatus(msg.msg);
+      }
     } catch (e) { }
   };
 
@@ -165,6 +166,7 @@ export default function App() {
     if (url.includes("owners_mode=SCOUT") || (url.includes("map.naver.com") && !url.includes("owners_mode=REVIEW"))) {
       setScoutUrl(url);
       setIsLoading(true); // Show Feedback
+      setScoutStatus("네이버 연결 중...");
 
       // SAFETY TIMEOUT: Force stop after 25 seconds if no result
       setTimeout(() => {
@@ -236,18 +238,19 @@ export default function App() {
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color="#FFD700" />
             <Text style={styles.loadingText}>매장 정보를 읽어오는 중...</Text>
+            <Text style={{ marginTop: 10, color: '#FFD700', fontSize: 12, fontWeight: 'bold' }}>[로그] {scoutStatus}</Text>
           </View>
         </View>
       )}
 
-      {/* HIDDEN SCOUT WORKER */}
+      {/* HIDDEN SCOUT WORKER - Now Visible but Behind Overlay to avoid throttling */}
       {scoutUrl && (
-        <View style={{ position: 'absolute', width: 1, height: 1, zIndex: -1, opacity: 0.01 }}>
+        <View style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 1 }}>
           <WebView
             ref={scoutRef}
             source={{ uri: scoutUrl }}
             onLoadEnd={() => {
-              // Imperative injection is more robust against bot/CSP checks
+              setScoutStatus("페이지 접속 완료. 분석 시작...");
               scoutRef.current.injectJavaScript(INJECTED_SCRIPT);
             }}
             onMessage={onScoutMessage}
