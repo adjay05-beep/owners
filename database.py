@@ -40,58 +40,66 @@ def fix_database_schema():
 
             # 3. [NEW] '고정(is_fixed)' 칸 없으면 추가
             if 'is_fixed' not in columns:
-                c.execute(
-                    "ALTER TABLE online_items ADD COLUMN is_fixed INTEGER DEFAULT 0"
-                )
-                c.execute(
-                    "UPDATE online_items SET is_fixed = 0 WHERE is_fixed IS NULL"
-                )
-                conn.commit()
-                st.toast("✅ 장부 업데이트: 상단 고정 기능 추가")
-                
+                try:
+                    c.execute("ALTER TABLE online_items ADD COLUMN is_fixed INTEGER DEFAULT 0")
+                    c.execute("UPDATE online_items SET is_fixed = 0 WHERE is_fixed IS NULL")
+                    conn.commit()
+                except sqlite3.OperationalError: pass
+
                 # 4. [NEW] 가격 스캔(B안) 컬럼들 추가
                 if 'price_sync_at' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN price_sync_at TEXT")
-                    c.execute("UPDATE online_items SET price_sync_at = NULL WHERE price_sync_at IS NULL")
-                    conn.commit()
-                    st.toast("✅ 장부 업데이트: 가격 스캔 시간 컬럼 추가")
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN price_sync_at TEXT")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'price_sync_status' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN price_sync_status TEXT")
-                    c.execute("UPDATE online_items SET price_sync_status = NULL WHERE price_sync_status IS NULL")
-                    conn.commit()
-                    st.toast("✅ 장부 업데이트: 가격 스캔 상태 컬럼 추가")
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN price_sync_status TEXT")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'price_sync_nonce' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN price_sync_nonce TEXT")
-                    c.execute("UPDATE online_items SET price_sync_nonce = NULL WHERE price_sync_nonce IS NULL")
-                    conn.commit()
-                    st.toast("✅ 장부 업데이트: 가격 스캔 nonce 컬럼 추가")
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN price_sync_nonce TEXT")
+                        c.execute("UPDATE online_items SET price_sync_nonce = NULL WHERE price_sync_nonce IS NULL")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'last_confirmed_at' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_at TEXT")
-                    c.execute("UPDATE online_items SET last_confirmed_at = NULL WHERE last_confirmed_at IS NULL")
-                    conn.commit()
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_at TEXT")
+                        c.execute("UPDATE online_items SET last_confirmed_at = NULL WHERE last_confirmed_at IS NULL")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'last_confirmed_price' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_price INTEGER")
-                    c.execute("UPDATE online_items SET last_confirmed_price = NULL WHERE last_confirmed_price IS NULL")
-                    conn.commit()
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_price INTEGER")
+                        c.execute("UPDATE online_items SET last_confirmed_price = NULL WHERE last_confirmed_price IS NULL")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'last_confirmed_title' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_title TEXT")
-                    c.execute("UPDATE online_items SET last_confirmed_title = NULL WHERE last_confirmed_title IS NULL")
-                    conn.commit()
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_title TEXT")
+                        c.execute("UPDATE online_items SET last_confirmed_title = NULL WHERE last_confirmed_title IS NULL")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'last_confirmed_url' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_url TEXT")
-                    c.execute("UPDATE online_items SET last_confirmed_url = NULL WHERE last_confirmed_url IS NULL")
-                    conn.commit()
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN last_confirmed_url TEXT")
+                        c.execute("UPDATE online_items SET last_confirmed_url = NULL WHERE last_confirmed_url IS NULL")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
                 if 'last_opened_at' not in columns:
-                    c.execute("ALTER TABLE online_items ADD COLUMN last_opened_at TEXT")
-                    c.execute("UPDATE online_items SET last_opened_at = NULL WHERE last_opened_at IS NULL")
-                    conn.commit()
+                    try:
+                        c.execute("ALTER TABLE online_items ADD COLUMN last_opened_at TEXT")
+                        c.execute("UPDATE online_items SET last_opened_at = NULL WHERE last_opened_at IS NULL")
+                        conn.commit()
+                    except sqlite3.OperationalError: pass
 
     except Exception as e:
         print(f"DB 수리 중 경고: {e}")
@@ -171,23 +179,37 @@ def init_db():
         )
 
     if not has_column(conn, "store_checklist", "review_sync_status"):
-        c.execute(
-            "ALTER TABLE store_checklist ADD COLUMN review_sync_status TEXT")
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN review_sync_status TEXT")
+            conn.commit()
+        except sqlite3.OperationalError: pass
 
     if not has_column(conn, "store_checklist", "review_sync_nonce"):
-        c.execute(
-            "ALTER TABLE store_checklist ADD COLUMN review_sync_nonce TEXT")
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN review_sync_nonce TEXT")
+            conn.commit()
+        except sqlite3.OperationalError: pass
 
     # [NEW] 광고/소식 주기 관리용
     if not has_column(conn, "store_checklist", "last_ad_analysis_at"):
-        c.execute("ALTER TABLE store_checklist ADD COLUMN last_ad_analysis_at TEXT")
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN last_ad_analysis_at TEXT")
+            conn.commit()
+        except sqlite3.OperationalError: pass
     
     if not has_column(conn, "store_checklist", "last_place_news_at"):
-        c.execute("ALTER TABLE store_checklist ADD COLUMN last_place_news_at TEXT")
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN last_place_news_at TEXT")
+            conn.commit()
+        except sqlite3.OperationalError: pass
 
     # [NEW] 스캔 시점 기록용 (최초 스캔 여부 판단)
     if not has_column(conn, "store_checklist", "last_scout_at"):
-        c.execute("ALTER TABLE store_checklist ADD COLUMN last_scout_at TEXT")
+        try:
+            c.execute("ALTER TABLE store_checklist ADD COLUMN last_scout_at TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass # Already exists
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS favorites (
