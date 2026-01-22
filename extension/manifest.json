@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "OWNERS Sync Helper",
+  "version": "1.4",
+  "description": "OWNERS와 네이버 플레이스/쇼핑 연동 도구",
+  "permissions": [
+    "storage",
+    "tabs",
+    "contextMenus"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "http://localhost:8501/*",
+    "https://*.streamlit.app/*",
+    "https://*.replit.dev/*",
+    "https://new.smartplace.naver.com/*",
+    "https://nid.naver.com/*",
+    "https://smartplace.naver.com/*",
+    "https://search.shopping.naver.com/*",
+    "https://msearch.shopping.naver.com/*",
+    "https://smartstore.naver.com/*",
+    "https://*.shopping.naver.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:8501/*",
+        "https://*.streamlit.app/*",
+        "https://*.replit.dev/*"
+      ],
+      "js": [
+        "content_owners.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://new.smartplace.naver.com/*",
+        "https://nid.naver.com/*",
+        "https://smartplace.naver.com/*",
+        "https://pcmap.place.naver.com/*",
+        "https://map.naver.com/*",
+        "https://search.shopping.naver.com/*",
+        "https://msearch.shopping.naver.com/*",
+        "https://smartstore.naver.com/*",
+        "https://*.shopping.naver.com/*"
+      ],
+      "js": [
+        "content_naver.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

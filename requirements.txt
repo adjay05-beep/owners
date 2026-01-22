@@ -1,0 +1,9 @@
+streamlit
+openai
+requests
+pandas
+fastapi
+uvicorn
+python-multipart
+python-jose[cryptography]
+pydantic
