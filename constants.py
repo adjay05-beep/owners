@@ -410,41 +410,33 @@ a.btn-outline:hover {
     background-color: #1e293b !important;
 }
 
-/* Premium Segmented Control (Navigation - Button Version) */
-.segmented-nav {
-    display: flex;
-    background-color: #E2E8F0;
-    border-radius: 14px;
-    padding: 4px;
-    margin-bottom: 24px;
-    gap: 4px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+/* Premium Segmented Control (Stabilized Version) */
+.stButton > button {
+    transition: all 0.2s ease !important;
 }
 
-/* Base style for buttons inside segmented nav */
-.segmented-nav div[data-testid="stColumn"] button {
-    width: 100% !important;
-    border: none !important;
-    background-color: transparent !important;
+/* Inactive Tabs (Secondary) */
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="secondary"] {
+    background-color: #E2E8F0 !important;
     color: #64748B !important;
+    border: none !important;
+    border-radius: 12px !important;
     font-weight: 700 !important;
-    padding: 10px 0 !important;
-    border-radius: 10px !important;
-    transition: all 0.25s ease !important;
-    height: auto !important;
-    min-height: unset !important;
-    box-shadow: none !important;
 }
 
-/* Active Button Highlight */
-.segmented-nav div[data-testid="stColumn"].active-tab button {
+/* Active Tab (Primary) */
+div[data-testid="stHorizontalBlock"] .stButton > button[kind="primary"] {
     background-color: white !important;
     color: #3B82F6 !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
 }
 
-.segmented-nav div[data-testid="stColumn"] button:hover {
-    background-color: rgba(255, 255, 255, 0.5) !important;
+div[data-testid="stHorizontalBlock"] .stButton > button:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
 }
 
 </style>

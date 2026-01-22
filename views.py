@@ -364,17 +364,10 @@ def render_order():
     st.subheader("🛒 AI 간편 발주 (통합)")
     st.caption("문자 발주와 온라인 구매 링크를 한 번에 정리해드립니다.")
 
-    # State Sync from session_state (No Reload)
+    # State Sync (Pure Session-based Navigation)
     if "otab" not in st.session_state: st.session_state.otab = "order"
-    
-    if "order_menu_selection" in st.session_state:
-        target = st.session_state["order_menu_selection"]
-        if target == "⚡ 통합 발주하기": st.session_state.otab = "order"
-        elif target == "📱 거래처 관리": st.session_state.otab = "sup"
-        elif target == "🌐 온라인 링크": st.session_state.otab = "link"
-        del st.session_state["order_menu_selection"]
 
-    # Counts for Badges
+    # Counts for Badges (Fetch Fresh)
     suppliers_count = len(get_suppliers(st.session_state.store_id))
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -383,9 +376,8 @@ def render_order():
         links_count = c.fetchone()[0]
         conn.close()
     except: links_count = 0
-
-    # Render Segmented Control (Using Columns & Buttons to prevent reload)
-    st.markdown('<div class="segmented-nav">', unsafe_allow_html=True)
+    
+    # Render Segmented Control
     c1, c2, c3 = st.columns(3)
     with c1:
         if st.button("⚡ 통합 발주", use_container_width=True, type="primary" if st.session_state.otab=="order" else "secondary"):
@@ -399,7 +391,6 @@ def render_order():
         if st.button(f"🌐 온라인 링크 ({links_count})", use_container_width=True, type="primary" if st.session_state.otab=="link" else "secondary"):
             st.session_state.otab = "link"
             st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Map otab for stable dispatch
     tab_id = st.session_state.otab

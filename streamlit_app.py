@@ -63,7 +63,6 @@ if "page" not in st.session_state: st.session_state.page = "LANDING"
 if "auth" not in st.session_state: st.session_state.auth = False
 if "username" not in st.session_state: st.session_state.username = None
 if "store_id" not in st.session_state: st.session_state.store_id = None
-if "order_menu_selection" not in st.session_state: st.session_state.order_menu_selection = "⚡ 통합 발주하기"
 
 # URL에 'price_done'이나 'price_cancel' 신호가 있으면 무조건 페이지를 ORDER로 고정
 if st.query_params.get("price_done") == "1" or st.query_params.get("price_cancel") == "1":
