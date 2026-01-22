@@ -34,6 +34,13 @@ NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET")
 # OPENAI_API_KEY handled in views.py / services.py
 
 # =========================
+# 0.5) Init DB (Schema Check) - MUST BE EARLY
+# =========================
+init_db()
+seed_admin()
+fix_database_schema()
+
+# =========================
 # 1) Session & Route Control
 # =========================
 if "page" not in st.session_state: st.session_state.page = "LANDING"
