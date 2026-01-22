@@ -16,100 +16,73 @@ export default function App() {
   const dashboardRef = useRef(null);
   const scoutRef = useRef(null);
 
-  // 3. Injected Script for Scout (Naver Place Scraper) - SMART AUDIT VERSION
+  // 3. Injected Script for Scout (Naver Place Scraper) - ULTRA ROBUST VERSION
   const INJECTED_SCRIPT = `
     (function() {
       if (window.ownersInjected) return;
       window.ownersInjected = true;
 
       function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
-      log("Scanner Started...");
+      log("Scanner Booted.");
 
-      // 1. Auto-Scroll to bottom (Force Naver to load hidden content)
-      let scrollAttempts = 0;
-      const scrollInterval = setInterval(() => {
-          window.scrollBy(0, 800);
-          scrollAttempts++;
-          if (scrollAttempts > 4) {
-              clearInterval(scrollInterval);
-              log("Scroll Finished.");
-          }
-      }, 500);
+      // 1. Auto-Scroll (Gentle but steady)
+      let scrollInt = setInterval(() => { window.scrollBy(0, 400); }, 800);
+      setTimeout(() => clearInterval(scrollInt), 10000);
 
-      // 2. Data Extraction
-      let scanCount = 0;
-      const scanInterval = setInterval(() => {
-        scanCount++;
+      // 2. Continuous Scan
+      let passes = 0;
+      const scanInt = setInterval(() => {
+        passes++;
         try {
             const body = document.body;
             const text = body.innerText || "";
             const html = body.innerHTML || "";
             
-            if (scanCount % 2 === 0) log("Scanning... Pass: " + scanCount + " | TextLen: " + text.length);
+            if (passes % 3 === 0) log("Pass " + passes + " | Len: " + text.length + " | Preview: " + text.substring(0, 40).replace(/\\n/g, " "));
 
-            // Check if page is loaded
-            if (text.length > 300) {
+            if (text.length > 50) {
+                // A. Primary Matchers
+                const hasHours = (text.includes("영업") || text.includes("매일") || text.includes("시 시작") || text.includes("시 종료") || html.includes("time")) ? "1" : "0";
+                const hasPhone = (text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/) || html.includes("tel:") || text.includes("전화")) ? "1" : "0";
+                const hasAddress = (text.includes("서울") || text.includes("경기") || text.includes("구 ") || text.includes("동 ") || text.match(/[가-히]{1,4}로/)) ? "1" : "0";
                 
-                // [A] Basic Info
-                const hasHours = (text.includes("영업 중") || text.includes("매일") || text.includes("시 시작") || html.includes("time") || text.includes("영업시간")) ? "1" : "0";
-                const hasPhone = (text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/) || html.includes("tel:")) ? "1" : "0";
-                const hasAddress = (text.includes("구 ") && text.includes("동 ") && text.match(/[가-히]{1,4}로/)) ? "1" : "0";
+                const hasMenu = (text.includes("메뉴") || text.includes("가격") || text.includes("원") || html.includes("/menu")) ? "1" : "0";
+                const hasNews = (text.includes("소식") || text.includes("새소식") || text.includes("공지") || html.includes("/feed")) ? "1" : "0";
+                const hasDesc = (text.includes("소개") || text.includes("설명") || text.includes("인사말") || text.length > 1200) ? "1" : "0";
                 
-                // [B] Content Tabs
-                const hasMenu = (text.includes("메뉴") || text.includes("가격") || html.includes("/menu")) ? "1" : "0";
-                const hasNews = (text.includes("소식") || text.includes("새소식") || html.includes("/feed") || text.includes("최근 소식")) ? "1" : "0";
-                const hasDesc = (text.includes("소개") || text.includes("설명") || (text.includes("인사말") && text.length > 500)) ? "1" : "0";
-                
-                // [C] Convenience
-                const hasKeywords = (text.includes("키워드") || html.includes("tag_item") || text.match(/#\\S+/g)?.length > 0) ? "1" : "0";
-                const hasParking = (text.includes("주차") || text.includes("발렛")) ? "1" : "0";
+                const hasKeywords = (text.includes("키워드") || text.includes("태그") || html.includes("tag_item") || text.match(/#\\S+/g)?.length > 0) ? "1" : "0";
+                const hasParking = (text.includes("주차") || text.includes("발렛") || text.includes("무료주차")) ? "1" : "0";
                 const hasWay = (text.includes("오시는") || text.includes("길찾기") || text.includes("출구") || text.includes("m")) ? "1" : "0";
                 
-                // Detailed check log
-                if (scanCount === 10) {
-                    log("Current State: H=" + hasHours + " P=" + hasPhone + " N=" + hasNews + " D=" + hasDesc);
-                }
-
-                // SUCCESS CRITERIA: Wait enough for scroll tasks but return early if we found a lot
-                const foundCount = [hasHours, hasPhone, hasAddress, hasMenu, hasNews, hasDesc, hasKeywords].filter(x => x === "1").length;
+                // If we found a critical mass of info, or we are at the end
+                const score = [hasHours, hasPhone, hasAddress, hasMenu].filter(x => x === "1").length;
                 
-                if (scanCount > 12 || foundCount >= 7) { 
-                     clearInterval(scanInterval);
-                     log("Scan Success. Found Items: " + foundCount);
-                     const result = {
+                if (passes > 15 || score >= 4) {
+                    clearInterval(scanInt);
+                    log("Scan Summary: Score=" + score + " | Sending Result...");
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
                         type: 'SCOUT_RESULT',
                         data: {
-                            has_desc: hasDesc,
-                            has_menu: hasMenu,
-                            has_keywords: hasKeywords,
-                            has_parking: hasParking,
-                            has_way: hasWay,
-                            has_hours: hasHours,
-                            has_phone: hasPhone,
-                            has_address: hasAddress,
-                            has_news: hasNews
+                            has_desc: hasDesc, has_menu: hasMenu, has_keywords: hasKeywords,
+                            has_parking: hasParking, has_way: hasWay, has_hours: hasHours,
+                            has_phone: hasPhone, has_address: hasAddress, has_news: hasNews
                         }
-                    };
-                    window.ReactNativeWebView.postMessage(JSON.stringify(result));
+                    }));
                 }
             }
-        } catch (e) {
-            log("Scan Error: " + e.message);
-        }
-        
-        // Safety Fallback (18 seconds)
-        if (scanCount > 30) {
-             clearInterval(scanInterval);
-             log("SCAN TIMEOUT [FATAL] - Body Text Sample: " + (document.body.innerText || "").substring(0, 100));
-             window.ReactNativeWebView.postMessage(JSON.stringify({
+        } catch (e) { log("Error: " + e.message); }
+
+        if (passes > 25) { // ~20 seconds
+            clearInterval(scanInt);
+            log("TIMEOUT [FINAL] - Sending whatever found.");
+            window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'SCOUT_RESULT',
                 data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
-             }));
+            }));
         }
-        
-      }, 600);
+      }, 800);
     })();
-    true; 
+    true;
   `;
 
   // 4. Message Handlers
