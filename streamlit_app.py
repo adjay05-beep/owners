@@ -147,6 +147,9 @@ def handle_scout_qp_global():
             msg_found = []
             msg_missing = []
             
+            # DEBUG: Confirm Store ID
+            # st.toast(f"DEBUG: StoreID={store_id}, TS={now_iso()}", icon="🐛")
+            
             if has_desc: msg_found.append("설명")
             else: msg_missing.append("설명")
             
@@ -663,6 +666,8 @@ elif st.session_state.page in PROTECTED_PAGES:
                 with st.container():
                     c_txt, c_btn = st.columns([4, 1.2])
                     with c_txt:
+                        # DEBUG:
+                        # st.write(f"Scout TS: {item.get('desc')} / Raw: {ck.get('last_scout_at')}")
                         st.markdown(f"""
                         <div style="
                             padding: 16px; 
