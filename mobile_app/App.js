@@ -23,14 +23,18 @@ export default function App() {
       window.ownersInjected = true;
 
       function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
+      log("Scanner Started...");
 
       // 1. Auto-Scroll to bottom (Force Naver to load hidden content)
       let scrollAttempts = 0;
       const scrollInterval = setInterval(() => {
           window.scrollBy(0, 800);
           scrollAttempts++;
-          if (scrollAttempts > 4) clearInterval(scrollInterval); // Scroll ~4 screens
-      }, 400);
+          if (scrollAttempts > 4) {
+              clearInterval(scrollInterval);
+              log("Scroll Finished.");
+          }
+      }, 500);
 
       // 2. Data Extraction
       let scanCount = 0;
@@ -41,8 +45,10 @@ export default function App() {
             const text = body.innerText || "";
             const html = body.innerHTML || "";
             
+            if (scanCount % 2 === 0) log("Scanning... Pass: " + scanCount + " | TextLen: " + text.length);
+
             // Check if page is loaded
-            if (text.length > 200) {
+            if (text.length > 300) {
                 
                 // [A] Basic Info
                 const hasHours = (text.includes("영업 중") || text.includes("매일") || text.includes("시 시작") || html.includes("time") || text.includes("영업시간")) ? "1" : "0";
@@ -51,17 +57,25 @@ export default function App() {
                 
                 // [B] Content Tabs
                 const hasMenu = (text.includes("메뉴") || text.includes("가격") || html.includes("/menu")) ? "1" : "0";
-                const hasNews = (text.includes("소식") || text.includes("새소식") || html.includes("/feed")) ? "1" : "0";
-                const hasDesc = (text.includes("소개") || text.includes("설명") || (text.includes("브리핑") && text.length > 500)) ? "1" : "0";
+                const hasNews = (text.includes("소식") || text.includes("새소식") || html.includes("/feed") || text.includes("최근 소식")) ? "1" : "0";
+                const hasDesc = (text.includes("소개") || text.includes("설명") || (text.includes("인사말") && text.length > 500)) ? "1" : "0";
                 
                 // [C] Convenience
-                const hasKeywords = (text.includes("키워드") || html.includes("tag_item") || text.match(/#\\S+/g)?.length > 1) ? "1" : "0";
+                const hasKeywords = (text.includes("키워드") || html.includes("tag_item") || text.match(/#\\S+/g)?.length > 0) ? "1" : "0";
                 const hasParking = (text.includes("주차") || text.includes("발렛")) ? "1" : "0";
-                const hasWay = (text.includes("오시는") || text.includes("길찾기") || text.includes("출구")) ? "1" : "0";
+                const hasWay = (text.includes("오시는") || text.includes("길찾기") || text.includes("출구") || text.includes("m")) ? "1" : "0";
                 
-                // SUCCESS CRITERIA: If we have basic sanity check OR timeout
-                if (scanCount > 6) { // Wait at least ~3.5s for scroll + render
+                // Detailed check log
+                if (scanCount === 10) {
+                    log("Current State: H=" + hasHours + " P=" + hasPhone + " N=" + hasNews + " D=" + hasDesc);
+                }
+
+                // SUCCESS CRITERIA: Wait enough for scroll tasks but return early if we found a lot
+                const foundCount = [hasHours, hasPhone, hasAddress, hasMenu, hasNews, hasDesc, hasKeywords].filter(x => x === "1").length;
+                
+                if (scanCount > 12 || foundCount >= 7) { 
                      clearInterval(scanInterval);
+                     log("Scan Success. Found Items: " + foundCount);
                      const result = {
                         type: 'SCOUT_RESULT',
                         data: {
@@ -83,13 +97,13 @@ export default function App() {
             log("Scan Error: " + e.message);
         }
         
-        // Safety Fallback (12 seconds)
-        if (scanCount > 20) {
+        // Safety Fallback (18 seconds)
+        if (scanCount > 30) {
              clearInterval(scanInterval);
-             log("Scan Timeout - Sending partial");
+             log("SCAN TIMEOUT [FATAL] - Body Text Sample: " + (document.body.innerText || "").substring(0, 100));
              window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'SCOUT_RESULT',
-                data: { has_desc:"0", has_menu:"0", has_keywords:"1", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
+                data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
              }));
         }
         
