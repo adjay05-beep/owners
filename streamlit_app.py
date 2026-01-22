@@ -534,43 +534,43 @@ elif st.session_state.page in PROTECTED_PAGES:
                 "type": "GO"
             })
 
-         # 2. Place Setting (+ Scout Button)
-        if not (ck.get("has_keywords") and ck.get("has_place_desc") and ck.get("has_way_guide") and ck.get("has_parking_guide") and ck.get("has_menu_guide")):
-             
-             # Identify missing fields for label
-             missing_list = []
-             if not ck.get("has_place_desc"): missing_list.append("설명")
-             if not ck.get("has_menu_guide"): missing_list.append("메뉴")
-             if not ck.get("has_keywords"): missing_list.append("키워드")
-             if not ck.get("has_parking_guide"): missing_list.append("주차")
-             if not ck.get("has_way_guide"): missing_list.append("길찾기")
-             missing_str = ", ".join(missing_list)
-             
-             description_html = ""
-             last_scout = ck.get("last_scout_at")
-             
-             if not last_scout:
-                 # Case 1: Never Scanned -> Clean State
-                 label_text = "플레이스 정보를 입력하세요"
-                 description_html = "<div style='margin-top:4px; font-size:13px; color:#666;'>매장 정보를 불러와서 점검해보세요.</div>"
-             elif missing_list:
-                 # Case 2: Scanned & Missing Found -> Red Alert
-                 label_text = "플레이스 정보를 입력하세요"
-                 description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>"
-             else:
-                 # Case 3: Scanned & All Good
-                 label_text = "플레이스 정보가 완벽합니다"
-                 description_html = "<div style='margin-top:4px; font-size:13px; color:#059669; font-weight:bold;'>✅ 모든 필수 정보가 등록되어 있습니다.</div>"
-             
-             # [VALIDATION] Check if URL exists
-             if not u_review_url or "naver.com" not in u_review_url:
-                  pending_items.append({
-                     "label": "스캔을 위해 '매장 URL' 입력이 필요합니다.",
-                     "btn": "URL 입력하러 가기",
-                     "target": "STORE_EDIT",
-                     "type": "GO" 
-                  })
-             else:
+        # 2. Place Setting (+ Scout Button)
+        # Define Audit Field Mapping
+        audit_map = [
+            ("has_place_desc", "소개"), ("has_menu_guide", "메뉴"), ("has_keywords", "키워드"),
+            ("has_parking_guide", "주차"), ("has_way_guide", "길찾기"), ("has_hours", "영업시간"),
+            ("has_phone", "전화번호"), ("has_address", "주소"), ("has_news", "소식")
+        ]
+        
+        missing_list = [label for field, label in audit_map if not ck.get(field)]
+        missing_str = ", ".join(missing_list)
+        last_scout = ck.get("last_scout_at")
+        
+        description_html = ""
+        label_text = ""
+        
+        if not last_scout:
+            # Case 1: Never Scanned
+            label_text = "플레이스 정보를 입력하세요"
+            description_html = "<div style='margin-top:4px; font-size:13px; color:#666;'>매장 정보를 불러와서 점검해보세요.</div>"
+        elif missing_list:
+            # Case 2: Scanned & Missing Found
+            label_text = "플레이스 정보를 입력하세요"
+            description_html = f"<div style='margin-top:4px; font-size:13px; color:#E53E3E; font-weight:bold;'>❌ 누락된 정보: {missing_str}</div>"
+        else:
+            # Case 3: All Perfect
+            label_text = "플레이스 정보가 완벽합니다"
+            description_html = "<div style='margin-top:4px; font-size:13px; color:#059669; font-weight:bold;'>✅ 모든 필수 정보가 등록되어 있습니다.</div>"
+
+        # [VALIDATION] Check if URL exists
+        if not u_review_url or "naver.com" not in u_review_url:
+            pending_items.append({
+                "label": "스캔을 위해 '매장 URL' 입력이 필요합니다.",
+                "btn": "URL 입력하러 가기",
+                "target": "STORE_EDIT",
+                "type": "GO" 
+            })
+        else:
                  # [OPTIMIZATION] Construct CLEAN Mobile URL
                  # Extract Place ID from: .../place/123456...
                  scout_target = ""
