@@ -123,6 +123,13 @@ def handle_review_sync_qp_global():
 def handle_scout_qp_global():
     # 3) 플레이스 정보 스캔 완료 신호
     if _qp_get("scout_done") == "1":
+        # Check for invalid URL signal
+        if _qp_get("is_invalid_url") == "1":
+            st.error("❗ 등록된 매장 URL이 잘못되었습니다. 네이버에서 검색되는 주소로 다시 설정해주세요.")
+            time.sleep(2)
+            st.rerun()
+            return
+
         try:
             store_id = int(_qp_get("owners_store_id") or "0")
             # nonce check can be added if needed
@@ -571,36 +578,37 @@ elif st.session_state.page in PROTECTED_PAGES:
                 "type": "GO" 
             })
         else:
-                 # [OPTIMIZATION] Construct CLEAN Mobile URL
-                 # Extract Place ID from: .../place/123456...
-                 scout_target = ""
-                 try:
-                     if "/place/" in u_review_url:
-                         # Split by /place/ and take the next part, then split by ? or /
-                         p_part = u_review_url.split("/place/")[1]
-                         place_id = p_part.split("?")[0].split("/")[0]
-                         # FORCE MOBILE HOME URL (Lightweight, reliable)
-                         scout_target = f"https://m.place.naver.com/place/{place_id}/home"
-                     else:
-                         # Fallback if ID parsing fails
-                         scout_target = u_review_url
-                 except:
-                     scout_target = u_review_url
+                # [OPTIMIZATION] Construct CLEAN Mobile URL
+                # Robust extraction of Place ID via Regex
+                import re
+                pid_match = re.search(r"/place/(\d+)", u_review_url or "")
+                if not pid_match: pid_match = re.search(r"entry=place/(\d+)", u_review_url or "") # Common PC variant
 
-                 # Add Params
-                 nonce = set_review_sync_pending(st.session_state.store_id)
-                 return_base = "https://owners-twrcya3hrhhktgutcwsmtc.streamlit.app"
-                 scout_target += f"{'&' if '?' in scout_target else '?'}owners_nonce={nonce}&owners_store_id={st.session_state.store_id}&owners_return_url={return_base}&owners_mode=SCOUT"
+                scout_target = ""
+                if pid_match:
+                    place_id = pid_match.group(1)
+                    # FORCE MOBILE HOME URL (Stable across all categories)
+                    scout_target = f"https://m.place.naver.com/place/{place_id}/home"
+                elif "m.place.naver.com" in (u_review_url or ""):
+                    scout_target = u_review_url # Already mobile
+                else:
+                    # Fallback to whatever is stored
+                    scout_target = u_review_url or "https://m.place.naver.com"
 
-                 pending_items.append({
-                     "label": label_text,
-                     "desc": description_html,
-                     "btn": "내 플레이스 정보 불러오기",
-                     "target": scout_target,
-                     "type": "LINK_SCOUT",
-                     "sub_btn": "정보 수정하기 (네이버)",
-                     "sub_target": "https://new.smartplace.naver.com/" 
-                 })
+                # Add Params
+                nonce = set_review_sync_pending(st.session_state.store_id)
+                return_base = "https://owners-twrcya3hrhhktgutcwsmtc.streamlit.app"
+                scout_target += f"{'&' if '?' in scout_target else '?'}owners_nonce={nonce}&owners_store_id={st.session_state.store_id}&owners_return_url={return_base}&owners_mode=SCOUT"
+
+                pending_items.append({
+                    "label": label_text,
+                    "desc": description_html,
+                    "btn": "내 플레이스 정보 불러오기",
+                    "target": scout_target,
+                    "type": "LINK_SCOUT",
+                    "sub_btn": "정보 수정하기 (네이버)",
+                    "sub_target": "https://new.smartplace.naver.com/" 
+                })
 
         # 3. Review Reply (Sync Check)
         # If SyncStatus is not OK or Unreplied > 0

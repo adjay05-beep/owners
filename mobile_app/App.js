@@ -40,6 +40,17 @@ export default function App() {
             
             if (passes % 3 === 0) log("Pass " + passes + " | Len: " + text.length + " | Preview: " + text.substring(0, 40).replace(/\\n/g, " "));
 
+            // [NEW] Page Not Found Detection
+            if (text.includes("페이지를 찾을 수 없습니다") || text.includes("존재하지 않는") || text.includes("잘못된 접근")) {
+                clearInterval(scanInt);
+                log("FATAL: Place Page Not Found on Naver.");
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'SCOUT_RESULT',
+                    data: { is_invalid_url: "1" }
+                }));
+                return;
+            }
+
             if (text.length > 50) {
                 // A. Primary Matchers
                 const hasHours = (text.includes("영업") || text.includes("매일") || text.includes("시 시작") || text.includes("시 종료") || html.includes("time")) ? "1" : "0";
