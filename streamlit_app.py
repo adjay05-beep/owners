@@ -66,9 +66,10 @@ if "store_id" not in st.session_state: st.session_state.store_id = None
 if "order_menu_selection" not in st.session_state: st.session_state.order_menu_selection = "⚡ 통합 발주하기"
 
 # URL에 'price_done'이나 'price_cancel' 신호가 있으면 무조건 페이지를 ORDER로 고정
-if st.query_params.get("price_done") == "1" or st.query_params.get("price_cancel") == "1":
+if st.query_params.get("price_done") == "1" or st.query_params.get("price_cancel") == "1" or st.query_params.get("otab"):
     st.session_state.page = "ORDER"
-    st.session_state["order_menu_selection"] = "🌐 온라인 링크"
+    if st.query_params.get("price_done") == "1":
+         st.session_state["order_menu_selection"] = "🌐 온라인 링크"
 
 # Caches
 if "p_keywords" not in st.session_state: st.session_state.p_keywords = ""

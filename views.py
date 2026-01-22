@@ -386,13 +386,13 @@ def render_order():
     # Render Segmented Control
     st.markdown(f"""
     <div class="segmented-nav">
-        <a href="?otab=order" target="_self" class="segment-item {'active' if otab == 'order' else 'inactive'}">
+        <a href="?page=ORDER&otab=order" target="_self" class="segment-item {'active' if otab == 'order' else 'inactive'}">
             ⚡ 통합 발주
         </a>
-        <a href="?otab=sup" target="_self" class="segment-item {'active' if otab == 'sup' else 'inactive'}">
+        <a href="?page=ORDER&otab=sup" target="_self" class="segment-item {'active' if otab == 'sup' else 'inactive'}">
             📱 거래처 <span style="font-size:10px; opacity:0.7;">({suppliers_count})</span>
         </a>
-        <a href="?otab=link" target="_self" class="segment-item {'active' if otab == 'link' else 'inactive'}">
+        <a href="?page=ORDER&otab=link" target="_self" class="segment-item {'active' if otab == 'link' else 'inactive'}">
             🌐 온라인 링크 <span style="font-size:10px; opacity:0.7;">({links_count})</span>
         </a>
     </div>
