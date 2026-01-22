@@ -157,7 +157,12 @@ def render_place(u_name, u_addr, cat_label, u_sig, u_str, u_target):
                 st.error("질문을 입력해 주세요.")
 
         if st.session_state.get("place_qa_res"):
-            st.markdown(f"<div class='qa-box'><div style='color:#FFD700; font-weight:bold; margin-bottom:10px;'>AI 답변</div><div style='color:#EEE; line-height:1.6;'>{st.session_state.place_qa_res}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class='qa-box'>
+                <div class='header'>💡 AI 답변</div>
+                <div>{st.session_state.place_qa_res}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
 def render_review(u_name, cat_label, u_sig, u_review_url):
     st.subheader("💬 네이버 리뷰 답글 생성기")
@@ -394,11 +399,9 @@ def render_order():
             st.warning("먼저 '거래처 관리'나 '온라인 링크' 탭에서 데이터를 등록해주세요!")
         else:
             st.markdown("""
-            <div style="background-color:#262730; border:1px solid #444; padding:15px; border-radius:8px; margin-bottom:20px;">
-                <strong style="color:#FFD700; font-size:16px;">💡 이렇게 입력해보세요</strong><br>
-                <div style="margin-top:8px; color:#E0E0E0; font-size:14px; line-height:1.5;">
+            <div class="prompt-box">
+                <div class="header">💡 이렇게 입력해보세요</div>
                 "<b>참이슬 3박스, 연어 2kg</b>, 그리고 쿠팡에서 <b>위생장갑</b> 링크 찾아줘."
-                </div>
             </div>
             """, unsafe_allow_html=True)
 

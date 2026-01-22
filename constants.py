@@ -218,9 +218,9 @@ html, body, [class*="css"] {
     background-color: #F1F5F9; /* Slate-100 */
 }
 
-/* Force Text Color for Markdown (Fix for Dark Mode conflict) */
+/* Standard Text Color (Use Streamlit Theme if possible, or fallback safely) */
 .stMarkdown p, .stMarkdown span, .stMarkdown div, .stMarkdown li {
-    color: var(--text-main) !important;
+    line-height: 1.6;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -378,6 +378,28 @@ a.btn-outline:hover {
 .badge-red { background-color: #FEE2E2; color: #DC2626; }
 .badge-green { background-color: #DCFCE7; color: #16A34A; }
 .badge-gray { background-color: #F1F5F9; color: #475569; }
+
+/* Custom Content Boxes (Stable Dark Backgrounds for AI text) */
+.qa-box, .guide-box, .prompt-box {
+    background-color: #1E293B !important; /* Fixed Dark Background */
+    color: #F1F5F9 !important; /* Fixed Light Text */
+    padding: 1.25rem;
+    border-radius: var(--radius);
+    border: 1px solid #334155;
+    margin: 1rem 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.qa-box .header, .prompt-box .header {
+    color: #FFD700 !important;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.guide-box {
+    border-top: 4px solid #FFD700;
+    background-color: #1e293b !important;
+}
 
 </style>
 """

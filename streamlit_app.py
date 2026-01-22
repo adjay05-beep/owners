@@ -844,12 +844,12 @@ elif st.session_state.page in PROTECTED_PAGES:
         left_info, right_work = st.columns([1, 2])
         with left_info:
              st.markdown(f"""
-            <div class="guide-box" style="border-left:none; border-top: 4px solid #FFD700;">
-                <div style="color:#fff; font-size:16px; font-weight:700; margin-bottom:15px;">상호 : {u_name}</div>
-                <div style="color:#888; font-size:13px; margin-bottom:2px;">업종</div>
-                <div style="color:#ddd; margin-bottom:10px;">{cat_label}</div>
-                <div style="color:#888; font-size:13px; margin-bottom:2px;">주소</div>
-                <div style="color:#ddd; margin-bottom:10px;">{u_addr}</div>
+            <div class="guide-box">
+                <div style="font-size:16px; font-weight:700; margin-bottom:12px;">상호 : {u_name}</div>
+                <div style="color:#888; font-size:12px; margin-bottom:2px;">업종</div>
+                <div style="margin-bottom:10px;">{cat_label}</div>
+                <div style="color:#888; font-size:12px; margin-bottom:2px;">주소</div>
+                <div>{u_addr}</div>
             </div>
             """, unsafe_allow_html=True)
 
