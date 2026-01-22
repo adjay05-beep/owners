@@ -553,9 +553,11 @@ elif st.session_state.page in PROTECTED_PAGES:
 
                  pending_items.append({
                      "label": label_text,
-                     "btn": "정보 불러오기 (스캔)",
+                     "btn": "내 플레이스 정보 불러오기",
                      "target": scout_target,
-                     "type": "LINK_SCOUT" 
+                     "type": "LINK_SCOUT",
+                     "sub_btn": "정보 수정하기 (네이버)",
+                     "sub_target": "https://new.smartplace.naver.com/" 
                  })
 
         # 3. Review Reply (Sync Check)
