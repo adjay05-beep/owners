@@ -15,69 +15,63 @@ export default function App() {
   const dashboardRef = useRef(null);
   const scoutRef = useRef(null);
 
-  // 3. Injected Script for Scout (Naver Place Scraper)
+  // 3. Injected Script for Scout (Naver Place Scraper) - OPTIMISTIC VERSION
   const INJECTED_SCRIPT = `
     (function() {
+      // Prevent multiple injections
       if (window.ownersInjected) return;
       window.ownersInjected = true;
 
       function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
 
-      setInterval(() => {
+      let attempts = 0;
+      const intervalId = setInterval(() => {
+        attempts++;
         try {
-            const text = document.body.innerText;
-            const currentUrl = window.location.href;
+            const bodyText = document.body.innerText || "";
             
-            // LOGIC: Check tabs on the PC Place Page
-            // The tabs are usually in a <div role="tablist"> or similar.
-            // On PC Map: 
-            // - "홈" (Home)
-            // - "소식" (News)
-            // - "메뉴" (Menu)
-            // - "리뷰" (Review)
-            // - "사진" (Photo)
-            // - "정보" (Info)
-            
-            // If the store hasn't uploaded 'Menu', the 'Menu' tab might still exist but be empty, 
-            // OR sometimes it doesn't show up if completely empty. 
-            // Naver Place usually shows tabs even if empty, but "소식" often disappears if no news.
-            
-            // Let's grab all text from the tab list to see what is enabled.
-            const tabList = document.querySelector("div[role='tablist']") || document.body;
-            const tabText = tabList.innerText; 
-            const bodyText = document.body.innerText;
-
-            const hasNews = tabText.includes("소식") ? "1" : "0";
-            const hasMenu = (tabText.includes("메뉴") || bodyText.includes("가격")) ? "1" : "0";
-            
-            // For 'Info' (Description, Parking, Way), we usually need to look at the 'Home' tab content or 'Info' tab.
-            // On 'Home' tab, they appear as sections.
-            const hasDesc = (bodyText.includes("소개") && bodyText.length > 300) ? "1" : "0"; 
-            const hasKeywords = (bodyText.match(/#\S+/g) || []).length > 2 ? "1" : "0";
-            const hasParking = (bodyText.includes("주차") || bodyText.includes("발렛")) ? "1" : "0";
-            const hasWay = (bodyText.includes("오시는") || bodyText.includes("찾아오는")) ? "1" : "0";
-            
-            // Only send if we found at least something distinctive (e.g. "홈" or Place title)
-            if (document.querySelector(".zPfVt") || bodyText.includes("복사")) {
-                 setTimeout(() => {
-                    const result = {
+            // Check if page has some content
+            if (bodyText.length > 50) {
+                
+                // Logic for Mobile Place
+                const hasNews = (bodyText.includes("소식") || bodyText.includes("새소식")) ? "1" : "0";
+                const hasMenu = (bodyText.includes("메뉴") || bodyText.includes("가격")) ? "1" : "0";
+                
+                const hasDesc = (bodyText.includes("소개") && bodyText.length > 100) ? "1" : "0";
+                const hasKeywords = (bodyText.includes("키워드") || bodyText.match(/#\S+/g)?.length > 1) ? "1" : "0";
+                const hasParking = (bodyText.includes("주차") || bodyText.includes("발렛")) ? "1" : "0";
+                const hasWay = (bodyText.includes("오시는") || bodyText.includes("길찾기")) ? "1" : "0";
+                
+                // If we found meaningful content OR we simply timed out (force return partial data)
+                if (hasDesc === "1" || hasMenu === "1" || attempts > 2) {
+                     clearInterval(intervalId);
+                     const result = {
                         type: 'SCOUT_RESULT',
                         data: {
                             has_desc: hasDesc,
                             has_menu: hasMenu,
                             has_keywords: hasKeywords,
                             has_parking: hasParking,
-                            has_way: hasWay,
-                            // Adding logic for 'News' later if needed in DB
+                            has_way: hasWay
                         }
                     };
                     window.ReactNativeWebView.postMessage(JSON.stringify(result));
-                }, 1500);
+                }
             }
         } catch (e) {
-            log("Scrape Error: " + e.toString());
+            // Keep trying
         }
-      }, 1000);
+        
+        // Safety Fallback: Force quit and send something after 3 seconds
+        if (attempts > 5) {
+             clearInterval(intervalId);
+             window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'SCOUT_RESULT',
+                data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0" } // Fallback empty
+             }));
+        }
+        
+      }, 800);
     })();
     true; 
   `;
