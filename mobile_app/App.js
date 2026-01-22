@@ -16,36 +16,52 @@ export default function App() {
   const dashboardRef = useRef(null);
   const scoutRef = useRef(null);
 
-  // 3. Injected Script for Scout (Naver Place Scraper) - OPTIMISTIC VERSION
+  // 3. Injected Script for Scout (Naver Place Scraper) - SMART AUDIT VERSION
   const INJECTED_SCRIPT = `
     (function() {
-      // Prevent multiple injections
       if (window.ownersInjected) return;
       window.ownersInjected = true;
 
       function log(msg) { window.ReactNativeWebView.postMessage(JSON.stringify({type: 'LOG', msg})); }
 
-      let attempts = 0;
-      const intervalId = setInterval(() => {
-        attempts++;
+      // 1. Auto-Scroll to bottom (Force Naver to load hidden content)
+      let scrollAttempts = 0;
+      const scrollInterval = setInterval(() => {
+          window.scrollBy(0, 800);
+          scrollAttempts++;
+          if (scrollAttempts > 4) clearInterval(scrollInterval); // Scroll ~4 screens
+      }, 400);
+
+      // 2. Data Extraction
+      let scanCount = 0;
+      const scanInterval = setInterval(() => {
+        scanCount++;
         try {
-            const bodyText = document.body.innerText || "";
+            const body = document.body;
+            const text = body.innerText || "";
+            const html = body.innerHTML || "";
             
-            // Check if page has some content
-            if (bodyText.length > 50) {
+            // Check if page is loaded
+            if (text.length > 200) {
                 
-                // Logic for Mobile Place
-                const hasNews = (bodyText.includes("소식") || bodyText.includes("새소식")) ? "1" : "0";
-                const hasMenu = (bodyText.includes("메뉴") || bodyText.includes("가격")) ? "1" : "0";
+                // [A] Basic Info
+                const hasHours = (text.includes("영업 중") || text.includes("매일") || text.includes("시 시작") || html.includes("time") || text.includes("영업시간")) ? "1" : "0";
+                const hasPhone = (text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/) || html.includes("tel:")) ? "1" : "0";
+                const hasAddress = (text.includes("구 ") && text.includes("동 ") && text.match(/[가-히]{1,4}로/)) ? "1" : "0";
                 
-                const hasDesc = (bodyText.includes("소개") && bodyText.length > 100) ? "1" : "0";
-                const hasKeywords = (bodyText.includes("키워드") || bodyText.match(/#\S+/g)?.length > 1) ? "1" : "0";
-                const hasParking = (bodyText.includes("주차") || bodyText.includes("발렛")) ? "1" : "0";
-                const hasWay = (bodyText.includes("오시는") || bodyText.includes("길찾기")) ? "1" : "0";
+                // [B] Content Tabs
+                const hasMenu = (text.includes("메뉴") || text.includes("가격") || html.includes("/menu")) ? "1" : "0";
+                const hasNews = (text.includes("소식") || text.includes("새소식") || html.includes("/feed")) ? "1" : "0";
+                const hasDesc = (text.includes("소개") || text.includes("설명") || (text.includes("브리핑") && text.length > 500)) ? "1" : "0";
                 
-                // If we found meaningful content OR we simply timed out (force return partial data)
-                if (hasDesc === "1" || hasMenu === "1" || attempts > 2) {
-                     clearInterval(intervalId);
+                // [C] Convenience
+                const hasKeywords = (text.includes("키워드") || html.includes("tag_item") || text.match(/#\\S+/g)?.length > 1) ? "1" : "0";
+                const hasParking = (text.includes("주차") || text.includes("발렛")) ? "1" : "0";
+                const hasWay = (text.includes("오시는") || text.includes("길찾기") || text.includes("출구")) ? "1" : "0";
+                
+                // SUCCESS CRITERIA: If we have basic sanity check OR timeout
+                if (scanCount > 6) { // Wait at least ~3.5s for scroll + render
+                     clearInterval(scanInterval);
                      const result = {
                         type: 'SCOUT_RESULT',
                         data: {
@@ -53,26 +69,31 @@ export default function App() {
                             has_menu: hasMenu,
                             has_keywords: hasKeywords,
                             has_parking: hasParking,
-                            has_way: hasWay
+                            has_way: hasWay,
+                            has_hours: hasHours,
+                            has_phone: hasPhone,
+                            has_address: hasAddress,
+                            has_news: hasNews
                         }
                     };
                     window.ReactNativeWebView.postMessage(JSON.stringify(result));
                 }
             }
         } catch (e) {
-            // Keep trying
+            log("Scan Error: " + e.message);
         }
         
-        // Safety Fallback: Force quit and send something after 3 seconds
-        if (attempts > 5) {
-             clearInterval(intervalId);
+        // Safety Fallback (12 seconds)
+        if (scanCount > 20) {
+             clearInterval(scanInterval);
+             log("Scan Timeout - Sending partial");
              window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'SCOUT_RESULT',
-                data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0" } // Fallback empty
+                data: { has_desc:"0", has_menu:"0", has_keywords:"1", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
              }));
         }
         
-      }, 800);
+      }, 600);
     })();
     true; 
   `;

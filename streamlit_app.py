@@ -133,6 +133,10 @@ def handle_scout_qp_global():
             has_keywords = int(_qp_get("has_keywords") or "0")
             has_parking = int(_qp_get("has_parking") or "0")
             has_way = int(_qp_get("has_way") or "0")
+            has_hours = int(_qp_get("has_hours") or "0")
+            has_phone = int(_qp_get("has_phone") or "0")
+            has_address = int(_qp_get("has_address") or "0")
+            has_news = int(_qp_get("has_news") or "0")
             
             # Update DB (checklist)
             update_checklist_flags(store_id, 
@@ -141,6 +145,10 @@ def handle_scout_qp_global():
                 has_keywords=has_keywords,
                 has_parking_guide=has_parking,
                 has_way_guide=has_way,
+                has_hours=has_hours,
+                has_phone=has_phone,
+                has_address=has_address,
+                has_news=has_news,
                 last_scout_at=now_iso() # Record timestamp
             )
             
@@ -148,26 +156,21 @@ def handle_scout_qp_global():
             msg_found = []
             msg_missing = []
             
-            if has_desc: msg_found.append("설명")
-            else: msg_missing.append("설명")
-
-            if has_menu: msg_found.append("메뉴")
-            else: msg_missing.append("메뉴")
+            mapping = [
+                (has_desc, "설명"), (has_menu, "메뉴"), (has_keywords, "키워드"),
+                (has_parking, "주차"), (has_way, "길찾기"), (has_hours, "영업시간"),
+                (has_phone, "전화번호"), (has_address, "주소"), (has_news, "소식")
+            ]
             
-            if has_keywords: msg_found.append("키워드")
-            else: msg_missing.append("키워드")
-            
-            if has_parking: msg_found.append("주차")
-            else: msg_missing.append("주차")
-             
-            if has_way: msg_found.append("길찾기")
-            else: msg_missing.append("길찾기")
+            for val, label in mapping:
+                if val: msg_found.append(label)
+                else: msg_missing.append(label)
             
             summary = ""
             if msg_found: summary += f"✅ 발견: {', '.join(msg_found)}  \n"
             if msg_missing: summary += f"❌ 누락: {', '.join(msg_missing)}"
             
-            st.toast(f"🔎 스캔 완료!\n{summary}", icon="🤖")
+            st.toast(f"🔎 스마트 스캔 완료!\n{summary}", icon="🤖")
             
             # Clear params and refresh UI to show new data
             time.sleep(2.0)

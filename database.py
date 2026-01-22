@@ -162,6 +162,10 @@ def init_db():
             has_menu_guide INTEGER DEFAULT 0,
             has_way_guide INTEGER DEFAULT 0,
             has_parking_guide INTEGER DEFAULT 0,
+            has_hours INTEGER DEFAULT 0,
+            has_phone INTEGER DEFAULT 0,
+            has_address INTEGER DEFAULT 0,
+            has_news INTEGER DEFAULT 0,
             last_review_reply_at TEXT,
             last_insta_caption_at TEXT,
             last_blog_post_at TEXT,
@@ -209,6 +213,14 @@ def init_db():
             c.execute("ALTER TABLE store_checklist ADD COLUMN has_menu_guide INTEGER DEFAULT 0")
             conn.commit()
         except sqlite3.OperationalError: pass
+
+    # [NEW] 비즈니스 감사 항목 (영업시간, 전화번호, 주소, 소식)
+    for col in ["has_hours", "has_phone", "has_address", "has_news"]:
+        if not has_column(conn, "store_checklist", col):
+            try:
+                c.execute(f"ALTER TABLE store_checklist ADD COLUMN {col} INTEGER DEFAULT 0")
+                conn.commit()
+            except sqlite3.OperationalError: pass
 
     # [NEW] 스캔 시점 기록용 (최초 스캔 여부 판단)
     if not has_column(conn, "store_checklist", "last_scout_at"):
