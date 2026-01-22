@@ -84,7 +84,7 @@ export default function App() {
                 
                 const score = [evHours, evPhone, evAddress, evMenu, evNews, evDesc].filter(x => !!x).length;
                 
-                if (passes > 18 || score >= 6) {
+                if (passes > 12 || score >= 6) {
                     clearInterval(scanInt);
                     log("Scan Complete. Score=" + score);
                     
@@ -121,7 +121,7 @@ export default function App() {
                 data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
             }));
         }
-      }, 800);
+      }, 700);
     })();
     true;
   `;
@@ -166,18 +166,17 @@ export default function App() {
       setScoutUrl(url);
       setIsLoading(true); // Show Feedback
 
-      // SAFETY TIMEOUT: Force stop after 15 seconds if no result
+      // SAFETY TIMEOUT: Force stop after 25 seconds if no result
       setTimeout(() => {
         setIsLoading((prev) => {
           if (prev) {
-            // If still loading, kill it
             setScoutUrl(null);
             alert("스캔 시간이 초과되었습니다. (네이버 접속 지연)");
             return false;
           }
           return prev;
         });
-      }, 15000);
+      }, 25000);
 
       return false;
     }
