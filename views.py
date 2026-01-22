@@ -364,15 +364,14 @@ def render_order():
     st.subheader("🛒 AI 간편 발주 (통합)")
     st.caption("문자 발주와 온라인 구매 링크를 한 번에 정리해드립니다.")
 
-    # State Sync from Query Params
-    raw_otab = st.query_params.get("otab", "order")
-    otab = raw_otab[0] if isinstance(raw_otab, list) else raw_otab
+    # State Sync from session_state (No Reload)
+    if "otab" not in st.session_state: st.session_state.otab = "order"
     
     if "order_menu_selection" in st.session_state:
         target = st.session_state["order_menu_selection"]
-        if target == "⚡ 통합 발주하기": otab = "order"
-        elif target == "📱 거래처 관리": otab = "sup"
-        elif target == "🌐 온라인 링크": otab = "link"
+        if target == "⚡ 통합 발주하기": st.session_state.otab = "order"
+        elif target == "📱 거래처 관리": st.session_state.otab = "sup"
+        elif target == "🌐 온라인 링크": st.session_state.otab = "link"
         del st.session_state["order_menu_selection"]
 
     # Counts for Badges
@@ -385,25 +384,25 @@ def render_order():
         conn.close()
     except: links_count = 0
 
-    # Render Segmented Control
-    st.markdown(f"""
-    <div class="segmented-nav">
-        <a href="?page=ORDER&otab=order" target="_self" class="segment-item {'active' if otab == 'order' else 'inactive'}">
-            ⚡ 통합 발주
-        </a>
-        <a href="?page=ORDER&otab=sup" target="_self" class="segment-item {'active' if otab == 'sup' else 'inactive'}">
-            📱 거래처 <span style="font-size:10px; opacity:0.7;">({suppliers_count})</span>
-        </a>
-        <a href="?page=ORDER&otab=link" target="_self" class="segment-item {'active' if otab == 'link' else 'inactive'}">
-            🌐 온라인 링크 <span style="font-size:10px; opacity:0.7;">({links_count})</span>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+    # Render Segmented Control (Using Columns & Buttons to prevent reload)
+    st.markdown('<div class="segmented-nav">', unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.button("⚡ 통합 발주", use_container_width=True, type="primary" if st.session_state.otab=="order" else "secondary"):
+            st.session_state.otab = "order"
+            st.rerun()
+    with c2:
+        if st.button(f"📱 거래처 ({suppliers_count})", use_container_width=True, type="primary" if st.session_state.otab=="sup" else "secondary"):
+            st.session_state.otab = "sup"
+            st.rerun()
+    with c3:
+        if st.button(f"🌐 온라인 링크 ({links_count})", use_container_width=True, type="primary" if st.session_state.otab=="link" else "secondary"):
+            st.session_state.otab = "link"
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Map otab to simple internal IDs for stable dispatch
-    tab_id = "order"
-    if otab in ["sup", "link"]:
-        tab_id = otab
+    # Map otab for stable dispatch
+    tab_id = st.session_state.otab
 
     # Tab Logic Dispatch
     if tab_id == "order":

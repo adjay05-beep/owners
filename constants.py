@@ -410,7 +410,7 @@ a.btn-outline:hover {
     background-color: #1e293b !important;
 }
 
-/* Premium Segmented Control (Navigation) */
+/* Premium Segmented Control (Navigation - Button Version) */
 .segmented-nav {
     display: flex;
     background-color: #E2E8F0;
@@ -420,30 +420,31 @@ a.btn-outline:hover {
     gap: 4px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
-.segment-item {
-    flex: 1;
-    text-align: center;
-    padding: 10px 0;
-    font-size: 14px;
-    font-weight: 700;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none !important;
-    border: none;
-    display: block;
-}
-.segment-item.active {
-    background-color: white;
-    color: #3B82F6 !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-.segment-item.inactive {
+
+/* Base style for buttons inside segmented nav */
+.segmented-nav div[data-testid="stColumn"] button {
+    width: 100% !important;
+    border: none !important;
+    background-color: transparent !important;
     color: #64748B !important;
+    font-weight: 700 !important;
+    padding: 10px 0 !important;
+    border-radius: 10px !important;
+    transition: all 0.25s ease !important;
+    height: auto !important;
+    min-height: unset !important;
+    box-shadow: none !important;
 }
-.segment-item.inactive:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-    color: #334155 !important;
+
+/* Active Button Highlight */
+.segmented-nav div[data-testid="stColumn"].active-tab button {
+    background-color: white !important;
+    color: #3B82F6 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.segmented-nav div[data-testid="stColumn"] button:hover {
+    background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 </style>
