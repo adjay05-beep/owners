@@ -169,7 +169,7 @@ export default function App() {
 
       {/* HIDDEN SCOUT WORKER */}
       {scoutUrl && (
-        <View style={{ height: 1, width: 1, opacity: 0, position: 'absolute' }}>
+        <View style={{ position: 'absolute', width: '100%', height: '100%', zIndex: -1, opacity: 0.01 }}>
           <WebView
             ref={scoutRef}
             source={{ uri: scoutUrl }}
