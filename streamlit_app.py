@@ -594,21 +594,29 @@ elif st.session_state.page in PROTECTED_PAGES:
             })
         else:
                 # [OPTIMIZATION] Construct CLEAN Mobile URL
-                # Robust extraction of Place ID via Regex
+                # Improved Regex to catch various categories (place, restaurant, hairshop, etc)
                 import re
-                pid_match = re.search(r"/place/(\d+)", u_review_url or "")
-                if not pid_match: pid_match = re.search(r"entry=place/(\d+)", u_review_url or "") # Common PC variant
-
                 scout_target = ""
-                if pid_match:
-                    place_id = pid_match.group(1)
-                    # FORCE MOBILE HOME URL (Stable across all categories)
-                    scout_target = f"https://m.place.naver.com/place/{place_id}/home"
-                elif "m.place.naver.com" in (u_review_url or ""):
-                    scout_target = u_review_url # Already mobile
+                
+                # Check if it's already a mobile URL
+                if "m.place.naver.com" in (u_review_url or ""):
+                    scout_target = u_review_url
                 else:
-                    # Fallback to whatever is stored
-                    scout_target = u_review_url or "https://m.place.naver.com"
+                    # Robust extraction of Category and Place ID via Regex
+                    # Matches: /restaurant/123, /place/123, /hairshop/123, etc.
+                    cat_match = re.search(r"/(place|restaurant|hairshop|medical|accommodation)/(\d+)", u_review_url or "")
+                    if cat_match:
+                        cat = cat_match.group(1)
+                        pid = cat_match.group(2)
+                        scout_target = f"https://m.place.naver.com/{cat}/{pid}/home"
+                    else:
+                        # Common PC variant check (entry=place/123)
+                        pid_match = re.search(r"entry=place/(\d+)", u_review_url or "")
+                        if pid_match:
+                            scout_target = f"https://m.place.naver.com/place/{pid_match.group(1)}/home"
+                        else:
+                            # Fallback to whatever is stored
+                            scout_target = u_review_url or "https://m.place.naver.com"
 
                 # Add Params
                 nonce = set_review_sync_pending(st.session_state.store_id)

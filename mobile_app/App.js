@@ -36,10 +36,12 @@ export default function App() {
         passes++;
         try {
             const body = document.body;
-            const text = body.innerText || "";
-            const html = body.innerHTML || "";
+            const docEl = document.documentElement;
+            // Aggregated text source
+            const text = (body.innerText || "") + " " + (docEl.innerText || "");
+            const html = (body.innerHTML || "") + " " + (docEl.innerHTML || "");
             
-            if (passes % 3 === 0) log("Pass " + passes + " | Len: " + text.length + " | Preview: " + text.substring(0, 40).replace(/\\n/g, " "));
+            if (passes % 5 === 0) log("Pass " + passes + " | RawLen: " + text.length + " | Visible: " + (text.substring(0, 30)));
 
             // [NEW] Page Not Found Detection
             if (text.includes("페이지를 찾을 수 없습니다") || text.includes("존재하지 않는") || text.includes("잘못된 접근")) {
@@ -61,21 +63,21 @@ export default function App() {
                     return null;
                 }
 
-                // [Hours] -> Check more patterns
-                const hourPatterns = ["영업", "매일", "시 시작", "시 종료", "휴무", "브레이크타임", "시간"];
+                // [Hours]
+                const hourPatterns = ["영업", "매일", "시 시작", "시 종료", "휴무", "브레이크타임", "시간", "정보 수정 제안"];
                 const evHours = findEvidence(hourPatterns, text) || (html.includes("time") ? "HTML Tag Found" : null);
 
                 // [Phone]
                 const phoneMatch = text.match(/\\d{2,3}-\\d{3,4}-\\d{4}/);
-                const evPhone = phoneMatch ? phoneMatch[0] : (html.includes("tel:") ? "Tel Link Found" : null);
+                const evPhone = phoneMatch ? phoneMatch[0] : (html.includes("tel:") || text.includes("전화") ? "Contact Found" : null);
 
                 // [Address]
-                const addrPatterns = ["서울", "경기", "인천", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주", "구 ", "동 ", "로 "];
+                const addrPatterns = ["서울", "경기", "인천", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주", "구 ", "동 ", "로 ", "길 "];
                 const evAddress = findEvidence(addrPatterns, text);
                 
                 // [Content]
-                const evMenu = findEvidence(["메뉴", "가격표", "가격", "피드", "원"], text) || (html.includes("/menu") ? "Menu Tab Link" : null);
-                const evNews = findEvidence(["최근 소식", "새소식", "소식", "공지", "이벤트"], text) || (html.includes("/feed") ? "Feed Tab Link" : null);
+                const evMenu = findEvidence(["메뉴", "가격표", "가격", "피드", "원", "메뉴판"], text) || (html.includes("/menu") ? "Menu Tab Link" : null);
+                const evNews = findEvidence(["최근 소식", "새소식", "소식", "공지", "이벤트", "업데이트"], text) || (html.includes("/feed") ? "Feed Tab Link" : null);
                 const evDesc = findEvidence(["소개", "설명", "인사말", "브리핑"], text) || (text.length > 1500 ? "Long Content Found" : null);
                 
                 // [Convenience]
@@ -85,9 +87,9 @@ export default function App() {
                 
                 const score = [evHours, evPhone, evAddress, evMenu, evNews, evDesc].filter(x => !!x).length;
                 
-                if (passes > 12 || score >= 6) {
+                if (passes > 15 || score >= 7) {
                     clearInterval(scanInt);
-                    log("Scan Complete. Score=" + score);
+                    log("Scan Complete. Score=" + score + " | Sending Result...");
                     
                     const auditDetails = {
                         hours: evHours, phone: evPhone, address: evAddress,
@@ -111,18 +113,20 @@ export default function App() {
                         }
                     }));
                 }
+            } else if (passes > 25) {
+                 log("Empty Result Pass " + passes + " | HTML Len: " + html.length);
             }
         } catch (e) { log("Error: " + e.message); }
 
-        if (passes > 30) { 
+        if (passes > 40) { 
             clearInterval(scanInt);
-            log("TIMEOUT.");
+            log("TIMEOUT [FINAL]. RawLen: " + (document.documentElement.innerText||"").length);
             window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'SCOUT_RESULT',
                 data: { has_desc:"0", has_menu:"0", has_keywords:"0", has_parking:"0", has_way:"0", has_hours:"0", has_phone:"0", has_address:"0", has_news:"0" }
             }));
         }
-      }, 700);
+      }, 500);
     })();
     true;
   `;
